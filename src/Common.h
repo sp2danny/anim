@@ -7,9 +7,9 @@
 #include <map>
 #include <cstdlib>
 
-struct SDL_Surface;
-struct SDL_PixelFormat;
-union SDL_Event;
+//struct SDL_Surface;
+//struct SDL_PixelFormat;
+//union SDL_Event;
 
 namespace Anim
 {

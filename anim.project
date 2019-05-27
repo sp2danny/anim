@@ -10,7 +10,7 @@
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
-      <Compiler Options="-std=c++17;-Wall;-Wextra;-Werror;-pedantic" C_Options="-Wall" Assembler="">
+      <Compiler Options="-std=c++17;-Wall;-Wextra;-Werror;-pedantic;-Wno-unused-parameter" C_Options="-Wall" Assembler="">
         <IncludePath Value="."/>
       </Compiler>
       <Linker Options="">

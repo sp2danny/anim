@@ -3,7 +3,7 @@
 
 #include "Anim.h"
 
-using namespace std;
+#include <cassert>
 
 template<typename T,typename U>
 T& BestFit( std::int16_t dir, U& vec )
@@ -63,18 +63,18 @@ template <typename T> inline void WriteBinary( std::ostream& ostr , const T& val
 // *** RGBA ***
 // ************
 
-C35::RGBA::RGBA()
-	: r(0),g(0),b(0),a(0)
+Anim::RGBA::RGBA()
+	: r(0), g(0), b(0), a(0)
 {
 }
 
-C35::RGBA::RGBA(UC _r,UC _g,UC _b)
-	: r(_r), g(_g), b(_b), a(0)
+Anim::RGBA::RGBA(UC r, UC g, UC b)
+	: r(r), g(g), b(b), a(0)
 {
 }
 	
-C35::RGBA::RGBA(UC _r,UC _g,UC _b,UC _a)
-	: r(_r), g(_g), b(_b), a(_a)
+Anim::RGBA::RGBA(UC r, UC g, UC b, UC a)
+	: r(r), g(g), b(b), a(a)
 {
 }
 
@@ -82,13 +82,14 @@ C35::RGBA::RGBA(UC _r,UC _g,UC _b,UC _a)
 // *** Surface ***
 // ***************
 
-C35::Pos C35::Surface::Hot() const
+auto Anim::Surface::Hot() const -> Anim::Pos
 {
 	return Pos(hx,hy);
 }
-void C35::Surface::Hot(const Pos& p) { hx=p.x; hy=p.y; }
+void Anim::Surface::Hot(const Pos& p) { hx=p.x; hy=p.y; }
 
-void C35::Surface::Overlay( SDL_Surface* dst, int x,int y) const
+/*
+void Anim::Surface::Overlay( SDL_Surface* dst, int x,int y) const
 {
 	if( surface && dst )
 	{
@@ -97,7 +98,7 @@ void C35::Surface::Overlay( SDL_Surface* dst, int x,int y) const
 	}
 }
 
-void C35::Surface::Overlay( Surface& dst, int x,int y ) const
+void Anim::Surface::Overlay( Surface& dst, int x,int y ) const
 {
 	if( surface && dst.surface )
 	{
@@ -106,108 +107,138 @@ void C35::Surface::Overlay( Surface& dst, int x,int y ) const
 	}
 
 }
+*/
 
-void C35::Surface::Create(int w,int h)
+void Anim::Surface::Create(int w,int h)
 {
-	surface = MakeSurface(w,h,SDL_GetVideoSurface()->format );
+	//surface = MakeSurface(w,h,SDL_GetVideoSurface()->format );
 	hx=hy=0;
 }
 
-void C35::Surface::FromCIS(CIS& cis)
+void Anim::Surface::FromCIS(CIS& cis)
 {
-	surface = cis.MakeSurface();
+	//surface = cis.MakeSurface();
 	hx = cis.hx; hy=cis.hy;
 }
 
-void C35::Surface::FromCIS(CIS& cis,UC hue)
+void Anim::Surface::FromCIS(CIS& cis, UC hue)
 {
-	surface = cis.MakeSurface(hue);
+	//surface = cis.MakeSurface(hue);
 	hx = cis.hx; hy=cis.hy;
 }
 
-void C35::Surface::FromBMP(char* bmp)
+void Anim::Surface::FromBMP(char* bmp)
 {
-	surface = SDL_LoadBMP(bmp);
-	hx=hy=0;
+	//surface = SDL_LoadBMP(bmp);
+	hx = hy = 0;
 }
 
-void C35::Surface::FromBMP(char* bmp,RGBA ck)
+void Anim::Surface::FromBMP(char* bmp, RGBA ck)
 {
-	surface = SDL_LoadBMP(bmp);
-	hx=hy=0;
-	if(surface)
+	//surface = SDL_LoadBMP(bmp);
+	hx = hy = 0;
+	/*if (surface)
 	{
 		Uint32 colk = SDL_MapRGB(surface->format, ck.r, ck.g, ck.a);
 		SDL_SetColorKey(surface,SDL_SRCCOLORKEY,colk);
-	}
+	}*/
 }
 
-void  C35::Surface::Free()
+void Anim::Surface::Free()
 {
-	if(surface)
-		SDL_FreeSurface(surface);
-	surface=0;
+	//if (surface)
+	//	SDL_FreeSurface(surface);
+	//surface = nullptr;
 }
 
-C35::Surface C35::Surface::Screen()
+Anim::Surface Anim::Surface::Screen()
 {
 	Surface s;
-	s.surface = SDL_GetVideoSurface();
+	//s.surface = SDL_GetVideoSurface();
 	s.hx = s.hy = 0;
 	return s;
 }
 
-int C35::Surface::Width()  const { return surface->w; }
-int C35::Surface::Height() const { return surface->h; }
+//int Anim::Surface::Width()  const { return surface->w; }
+//int Anim::Surface::Height() const { return surface->h; }
+
+template <typename T> inline void ReadBinary( std::istream& istr , T& val )
+{
+	int i,n = sizeof(T);
+	char* p = (char*) &val;
+
+	for(i=0;i<n;++i)
+	{
+		char c;
+		istr.read(&c,1);
+		(*p) = c;
+		++p;
+	}
+}
+
+template <typename T> inline void WriteBinary( std::ostream& ostr , const T& val )
+{
+	int i,n = sizeof(T);
+	const char* p = (char*) &val;
+
+	for(i=0;i<n;++i)
+	{
+		char c;
+		c = (*p);
+		++p;
+		ostr.write(&c,1);
+	}
+}
+
 
 // ***********
 // *** CIS ***
 // ***********
 
-C35::AnimReflection C35::CIS::Refl(UC hue)
+Anim::AnimReflection Anim::CIS::Refl(UC hue)
 {
 	AnimReflection ar(this,hue);
 	return ar;
 }
 
-string ExtractFileExt(std::string fn)
+std::string ExtractFileExt(std::string fn)
 {
 	auto p = fn.find_last_of('.');
-	if(p==string::npos) return "";
-	string ret = fn.substr(p+1);
-	for( char& c : ret ) c=tolower(c);
+	if(p==std::string::npos) return "";
+	std::string ret = fn.substr(p+1);
+	for ( char& c : ret ) c=std::tolower(c);
 	return ret;
 }
 
-string ExtractFileBase(std::string fn)
+std::string ExtractFileBase(std::string fn)
 {
 	auto p = fn.find_last_of('.');
-	if(p==string::npos) return fn;
-	string ret = fn.substr(0,p);
+	if(p==std::string::npos) return fn;
+	std::string ret = fn.substr(0,p);
 	//for( char& c : ret ) c=tolower(c);
 	return ret;
 }
 
-extern C35::CIS LoadPCX(const char* fn);
+extern Anim::CIS LoadPCX(const char* fn);
 
-bool C35::CIS::LoadExt(string fn)
+bool Anim::CIS::LoadExt(std::string fn)
 {
-	string ext = ExtractFileExt(fn);
+	std::string ext = ExtractFileExt(fn);
 	if(ext=="cis")
 	{
-		ifstream ifs(fn,ios::in|ios::binary);
+		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		if(ifs.bad()) return false;
 		Load(ifs);
 		return true;
 	}
-	else if(ext=="bmp")
-	{
-		SDL_Surface* srf = SDL_LoadBMP(fn.c_str());
-		if(!srf) return false;
-		SDL_Surface* tm = MakeTransMaskFromImage(srf);
-		FromImg(srf,tm,0,0);
-		return true;
-	}
+	//else if(ext=="bmp")
+	//{
+	//	SDL_Surface* srf = SDL_LoadBMP(fn.c_str());
+	//	if(!srf) return false;
+	//	SDL_Surface* tm = MakeTransMaskFromImage(srf);
+	//	FromImg(srf,tm,0,0);
+	//	return true;
+	//}
 	else if(ext=="pcx")
 	{
 		LoadPCX(fn.c_str());
@@ -216,7 +247,7 @@ bool C35::CIS::LoadExt(string fn)
 	return false;
 }
 /*
-void C35::CIS::DummySave()
+void Anim::CIS::DummySave()
 {
 	static int ii = 1;
 	char buff[256];
@@ -227,7 +258,7 @@ void C35::CIS::DummySave()
 	srf.Free();
 }*/
 
-void C35::CIS::LoadInternal( istream& is )
+void Anim::CIS::LoadInternal( std::istream& is )
 {
 	has_dither = has_trans = has_colimp = false;
 
@@ -337,7 +368,7 @@ void C35::CIS::LoadInternal( istream& is )
 	#endif
 }
 
-void C35::CIS::SaveInternal( ostream& os )
+void Anim::CIS::SaveInternal( std::ostream& os )
 {
 	unsigned int i,sz = w*h;
 
@@ -417,7 +448,7 @@ void C35::CIS::SaveInternal( ostream& os )
 	Rem(os);
 }
 
-void C35::CIS::LoadOld( istream& is )
+void Anim::CIS::LoadOld( std::istream& is )
 {
 	ReadBinary( is, w );
 	ReadBinary( is, h );
@@ -427,7 +458,7 @@ void C35::CIS::LoadOld( istream& is )
 	LoadInternal(is);
 }
 
-void C35::CIS::SaveOld( ostream& os )
+void Anim::CIS::SaveOld( std::ostream& os )
 {
 	WriteBinary( os, w );
 	WriteBinary( os, h );
@@ -437,14 +468,14 @@ void C35::CIS::SaveOld( ostream& os )
 	SaveInternal(os);
 }
 
-void C35::CIS::Load( istream& is )
+void Anim::CIS::Load( std::istream& is )
 {
 	char buff[5] = {};
 
 	is.read(buff,4);
-	if( string(buff) != "CIS2" )
+	if( std::string(buff) != "CIS2" )
 	{
-		is.seekg(-4, ios_base::cur);
+		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
@@ -457,7 +488,7 @@ void C35::CIS::Load( istream& is )
 	}
 }
 
-void C35::CIS::Save( ostream& os, int dep )
+void Anim::CIS::Save( std::ostream& os, int dep )
 {
 	os.write( "CIS2" , 4 );
 	WriteBinary( os, w );
@@ -470,7 +501,7 @@ void C35::CIS::Save( ostream& os, int dep )
 	SaveInternal(os);
 }
 
-C35::RGBA C35::HSVA_2_RGBA( const HSVA& hsv )
+Anim::RGBA Anim::HSVA_2_RGBA( const HSVA& hsv )
 {
 	RGBA rgb;
 	rgb.a = hsv.a;
@@ -508,7 +539,7 @@ C35::RGBA C35::HSVA_2_RGBA( const HSVA& hsv )
 using std::min;
 using std::max;
 
-C35::HSVA C35::RGBA_2_HSVA( const RGBA& rgb )
+Anim::HSVA Anim::RGBA_2_HSVA( const RGBA& rgb )
 {
 	HSVA hsv = { 0,0,0,rgb.a };
 
@@ -530,8 +561,8 @@ C35::HSVA C35::RGBA_2_HSVA( const RGBA& rgb )
 
 	return hsv;
 }
-
-C35::RGBA GetPixel( SDL_Surface* surf, int x, int y)
+/*
+Anim::RGBA GetPixel( SDL_Surface* surf, int x, int y)
 {
 	SDL_PixelFormat* fmt = surf->format;
 	char* p = (char*) surf->pixels;
@@ -546,21 +577,21 @@ C35::RGBA GetPixel( SDL_Surface* surf, int x, int y)
 	temp=pixel&fmt->Bmask; temp=temp>>fmt->Bshift; temp=temp<<fmt->Bloss; blue  =(Uint8)temp;
 	temp=pixel&fmt->Amask; temp=temp>>fmt->Ashift; temp=temp<<fmt->Aloss; alpha =(Uint8)temp;
 
-	return C35::RGBA(red,green,blue,alpha);
+	return Anim::RGBA(red,green,blue,alpha);
 }
 
-SDL_Surface* C35::MakeSurface(int w,int h,SDL_PixelFormat* pf,int mask)
+SDL_Surface* Anim::MakeSurface(int w,int h,SDL_PixelFormat* pf,int mask)
 {
 	return
 		SDL_CreateRGBSurface(mask,w,h,pf->BitsPerPixel,pf->Rmask,pf->Gmask,pf->Bmask,pf->Amask);
 }
 
-SDL_Surface* C35::MakeSurface(int w,int h,SDL_PixelFormat* pf)
+SDL_Surface* Anim::MakeSurface(int w,int h,SDL_PixelFormat* pf)
 {
 	return MakeSurface(w,h,pf,SDL_HWSURFACE);
 }
 
-SDL_Surface* C35::MakeTransMaskFromImage(SDL_Surface* img)
+SDL_Surface* Anim::MakeTransMaskFromImage(SDL_Surface* img)
 {
 	int w = img->w;
 	int h = img->h;
@@ -581,7 +612,7 @@ SDL_Surface* C35::MakeTransMaskFromImage(SDL_Surface* img)
 		unsigned long bl = SDL_MapRGB(pf,0,0,0);
 		for(x=0;x<w;++x)
 		{
-			C35::RGBA pp = GetPixel(img,x,y);
+			Anim::RGBA pp = GetPixel(img,x,y);
 			unsigned long pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
 			if(pix==ck)
 			{
@@ -603,8 +634,8 @@ SDL_Surface* C35::MakeTransMaskFromImage(SDL_Surface* img)
 
 	return tm;
 }
-
-static int grayscale(C35::RGBA p)
+*/
+static int grayscale(Anim::RGBA p)
 {
 	return (p.r+p.g+p.b) / 3;
 }
@@ -614,9 +645,9 @@ namespace
 	struct Pix
 	{
 		Pix() {}
-		Pix(C35::CIS::PixelType _pt, C35::HSVA _hsv) : pt(_pt), hsv(_hsv) {}
-		C35::CIS::PixelType pt;
-		C35::HSVA hsv;
+		Pix(Anim::CIS::PixelType _pt, Anim::HSVA _hsv) : pt(_pt), hsv(_hsv) {}
+		Anim::CIS::PixelType pt;
+		Anim::HSVA hsv;
 	};
 	typedef std::vector<Pix> Pixels;
 
@@ -652,7 +683,7 @@ namespace
 				a += p.hsv.a;
 			}
 		}
-		mean.pt = (C35::CIS::PixelType)pt;
+		mean.pt = (Anim::CIS::PixelType)pt;
 		mean.hsv.h = h / count[pt];
 		mean.hsv.s = s / count[pt];
 		mean.hsv.v = v / count[pt];
@@ -662,27 +693,27 @@ namespace
 	}
 }
 
-void C35::CIS::Scale150w()
+void Anim::CIS::Scale150w()
 {
-	vector<PixelType> pt2;
-	vector<HSVA> p2;
+	std::vector<PixelType> pt2;
+	std::vector<HSVA> p2;
 
-	int x,y;
-	int i=0;
+	int x, y;
+	int i = 0;
 
 	PixelType curr,next;
 	HSVA hsv1, hsv2;
 
 	int ww = 0;
-	for(x=0;x<w;++x)
+	for(x=0; x<w; ++x)
 	{
 		++ww;
 		if( ((x%2)==0) && ((x+1)<w) ) ++ww;
 	}
 
-	for(y=0;y<h;++y)
+	for(y=0; y<h; ++y)
 	{
-		for(x=0;x<w;++x)
+		for(x=0; x<w; ++x)
 		{
 			curr = pixeltypes[i];
 			hsv1 = pixels[i];
@@ -737,10 +768,10 @@ void C35::CIS::Scale150w()
 	pixels.assign( p2.begin(), p2.end() );
 }
 
-void C35::CIS::Skip3()
+void Anim::CIS::Skip3()
 {
-	vector<PixelType> pt2;
-	vector<HSVA> p2;
+	std::vector<PixelType> pt2;
+	std::vector<HSVA> p2;
 
 	int x,y;
 	int nw=0,nh=0;
@@ -771,10 +802,10 @@ void C35::CIS::Skip3()
 	h = nh;
 }
 
-void C35::CIS::Scale150h()
+void Anim::CIS::Scale150h()
 {
-	vector<PixelType> pt2;
-	vector<HSVA> p2;
+	std::vector<PixelType> pt2;
+	std::vector<HSVA> p2;
 
 	int x,y;
 	int i=0;
@@ -857,7 +888,7 @@ void C35::CIS::Scale150h()
 	pixels.assign( p2.begin(), p2.end() );
 }
 
-void C35::CIS::Scale50w()
+void Anim::CIS::Scale50w()
 {
 	CIS small;
 
@@ -875,7 +906,7 @@ void C35::CIS::Scale50w()
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const vector<HSVA>& pix ) -> void
+	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
 	{
 		if(pt==alpha)  small.has_dither =true;
 		if(pt==trans)  small.has_trans  =true;
@@ -896,7 +927,7 @@ void C35::CIS::Scale50w()
 
 	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
 	{
-		vector<HSVA> nrm, trn, cli, dth;
+		std::vector<HSVA> nrm, trn, cli, dth;
 		for(int xx=0; xx<2; ++xx)
 		{
 			int x2 = x*2+xx;
@@ -928,7 +959,7 @@ void C35::CIS::Scale50w()
 
 }
 
-void C35::CIS::Scale50h()
+void Anim::CIS::Scale50h()
 {
 	CIS small;
 
@@ -946,7 +977,7 @@ void C35::CIS::Scale50h()
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const vector<HSVA>& pix ) -> void
+	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
 	{
 		if(pt==alpha)  small.has_dither =true;
 		if(pt==trans)  small.has_trans  =true;
@@ -967,7 +998,7 @@ void C35::CIS::Scale50h()
 
 	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
 	{
-		vector<HSVA> nrm, trn, cli, dth;
+		std::vector<HSVA> nrm, trn, cli, dth;
 		for( int yy=0; yy<2; ++yy )
 		{
 			int x2 = x;
@@ -998,7 +1029,7 @@ void C35::CIS::Scale50h()
 
 }
 
-C35::CIS C35::CIS::HalfSize()
+Anim::CIS Anim::CIS::HalfSize()
 {
 	CIS small;
 
@@ -1016,7 +1047,7 @@ C35::CIS C35::CIS::HalfSize()
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const vector<HSVA>& pix ) -> void
+	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
 	{
 		if(pt==alpha)  small.has_dither =true;
 		if(pt==trans)  small.has_trans  =true;
@@ -1037,7 +1068,7 @@ C35::CIS C35::CIS::HalfSize()
 
 	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
 	{
-		vector<HSVA> nrm, trn, cli, dth;
+		std::vector<HSVA> nrm, trn, cli, dth;
 		for( int yy=0; yy<2; ++yy ) for(int xx=0; xx<2; ++xx)
 		{
 			int x2 = x*2+xx;
@@ -1068,7 +1099,7 @@ C35::CIS C35::CIS::HalfSize()
 	return small;
 }
 
-C35::CIS C35::CIS::CutOut( int x1,int y1,int ww,int hh)
+Anim::CIS Anim::CIS::CutOut( int x1,int y1,int ww,int hh)
 {
 	assert( (x1>=0) && (y1>=0) );
 	assert( (x1+ww) <= w );
@@ -1095,7 +1126,7 @@ C35::CIS C35::CIS::CutOut( int x1,int y1,int ww,int hh)
 }
 
 
-void C35::CIS::Crop()
+void Anim::CIS::Crop()
 {
 	int W = w;
 	auto xy = [&W](int x,int y) -> int { return y*W + x; } ;
@@ -1139,8 +1170,8 @@ void C35::CIS::Crop()
 	int new_w = w - lftcrop - rghcrop;
 	int new_h = h - topcrop - botcrop;
 	assert( (new_w>0) && (new_w<=w) && (new_h>0) && (new_h<=h) );
-	vector<PixelType> new_pt; new_pt.reserve(new_w*new_h);
-	vector<HSVA>      new_px; new_px.reserve(new_w*new_h);
+	std::vector<PixelType> new_pt; new_pt.reserve(new_w*new_h);
+	std::vector<HSVA>      new_px; new_px.reserve(new_w*new_h);
 	for(int y=0;y<new_h;++y) for(int x=0;x<new_w;++x)
 	{
 		int idx = xy( x+lftcrop, y+topcrop );
@@ -1153,171 +1184,171 @@ void C35::CIS::Crop()
 	hx-=lftcrop; hy-=topcrop;
 }
 
-void C35::CIS::FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask )
-{
-	assert(image);
-	w = image->w;
-	h = image->h;
-	hx=0; //w/2;
-	hy=0; //(2*h)/3;
-
-	has_dither = dithermask;
-	has_trans  = transmask;
-	has_colimp = colimpmask;
-
-	int n = w*h;
-	pixels.clear();
-	pixeltypes.clear();
-	pixels.reserve(n);
-	pixeltypes.reserve(n);
-
-	int x,y;
-	for(y=0;y<h;++y) 
-	{
-		for(x=0;x<w;++x)
-		{
-			if(colimpmask && (grayscale( GetPixel(colimpmask,x,y) ) > 127) )
-			{
-				pixeltypes.push_back(colimp);
-				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
-				pixels.push_back(hsv);
-			}
-			else if(transmask && (grayscale( GetPixel(transmask,x,y) ) < 127) )
-			{
-				pixeltypes.push_back(trans);
-				HSVA hsv = { 0,0,0,255 };
-				pixels.push_back(hsv);
-			}
-			else if(dithermask && (grayscale( GetPixel(dithermask,x,y) ) > 127) )
-			{
-				pixeltypes.push_back(alpha);
-				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
-				hsv.a = 128;
-				pixels.push_back(hsv);
-			}
-			else
-			{
-				pixeltypes.push_back(normal);
-				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
-				pixels.push_back(hsv);
-			}
-		}
-	}
-}
-
-SDL_Surface* C35::CIS::MakeSurface()
-{
-	SDL_Surface* srf;
-	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
-	int mask = SDL_HWSURFACE;
-	if( has_trans || has_dither )
-		mask |= SDL_SRCCOLORKEY;
-	srf = C35::MakeSurface(w,h,pf,mask);
-	//srf = SDL_CreateRGBSurface(mask,w,h,pf->BitsPerPixel,pf->Rmask,pf->Gmask,pf->Bmask,pf->Amask);
-	assert(srf);
-	SDL_LockSurface(srf);
-	int x,y;
-	pf = srf->format;
-	int i=0;
-
-	for(y=0;y<h;++y)
-	{
-		unsigned char* ptr = (unsigned char*) srf->pixels;
-		ptr += (srf->pitch) * y;
-
-		for(x=0;x<w;++x)
-		{
-			RGBA pp = HSVA_2_RGBA(pixels[i]);
-			if(has_trans || has_dither)
-			{
-				if( pp.r==255 && pp.g==0 && pp.b==255 )
-					pp.g = 1;
-			}
-			unsigned long pix;
-			if(pixeltypes[i]==alpha)
-				if( /*(((y-hy)%2)==1) &&*/ (((x+y-hx-hy)%2)!=0) )
-					pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
-				else
-					pix = SDL_MapRGB(pf,255,0,255);
-			else if(pixeltypes[i]==trans)
-				pix = SDL_MapRGB(pf,255,0,255);
-			else
-				pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
-			for(int j=0;j<pf->BytesPerPixel;++j)
-			{
-				(*ptr) = (unsigned char)(pix&255);
-				pix = pix >> 8;
-				++ptr;
-			}
-			++i;
-		}
-	}
-	SDL_UnlockSurface(srf);
-
-	if( has_trans || has_dither )
-	{
-		SDL_SetColorKey( srf,SDL_SRCCOLORKEY, SDL_MapRGB(pf,255,0,255) );
-	}
-	return srf;
-}
-
-SDL_Surface* C35::CIS::MakeSurface(unsigned char alpha,unsigned char hue)
-{
-	SDL_Surface* srf;
-	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
-	int mask = SDL_HWSURFACE | SDL_SRCALPHA;
-	srf = SDL_CreateRGBSurface(mask,w,h,32,0xFF0000ul,0xFF00ul,0xFFul,0xFF000000ul);
-	assert(srf);
-	SDL_LockSurface(srf);
-	int x,y;
-	pf = srf->format;
-	int i=0;
-
-	for(y=0;y<h;++y)
-	{
-		unsigned char* ptr = (unsigned char*) srf->pixels;
-		ptr += (srf->pitch) * y;
-
-		for(x=0;x<w;++x)
-		{
-			if(pixeltypes[i]==colimp)
-				pixels[i].h = hue;
-			RGBA pp = HSVA_2_RGBA(pixels[i]);
-			unsigned long pix;
-			if(pixeltypes[i]==alpha)
-				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,alpha);
-			else if(pixeltypes[i]==trans)
-				pix = SDL_MapRGBA(pf,0,0,0,0);
-			else
-				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,255);
-			for(int j=0;j<pf->BytesPerPixel;++j)
-			{
-				(*ptr) = (unsigned char)(pix&255);
-				pix = pix >> 8;
-				++ptr;
-			}
-			++i;
-		}
-	}
-	SDL_UnlockSurface(srf);
-
-	return srf;
-}
-
-SDL_Surface* C35::CIS::MakeSurface(unsigned char hue)
-{
-	int i,sz = w*h;
-	for(i=0;i<sz;++i)
-	{
-		if( pixeltypes[i] == colimp )
-		{
-			pixels[i].h = hue;
-		}
-	}
-	return MakeSurface();
-}
-
-void C35::CIS::Unimport()
+//void Anim::CIS::FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask )
+//{
+//	assert(image);
+//	w = image->w;
+//	h = image->h;
+//	hx=0; //w/2;
+//	hy=0; //(2*h)/3;
+//
+//	has_dither = dithermask;
+//	has_trans  = transmask;
+//	has_colimp = colimpmask;
+//
+//	int n = w*h;
+//	pixels.clear();
+//	pixeltypes.clear();
+//	pixels.reserve(n);
+//	pixeltypes.reserve(n);
+//
+//	int x,y;
+//	for(y=0;y<h;++y)
+//	{
+//		for(x=0;x<w;++x)
+//		{
+//			if(colimpmask && (grayscale( GetPixel(colimpmask,x,y) ) > 127) )
+//			{
+//				pixeltypes.push_back(colimp);
+//				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
+//				pixels.push_back(hsv);
+//			}
+//			else if(transmask && (grayscale( GetPixel(transmask,x,y) ) < 127) )
+//			{
+//				pixeltypes.push_back(trans);
+//				HSVA hsv = { 0,0,0,255 };
+//				pixels.push_back(hsv);
+//			}
+//			else if(dithermask && (grayscale( GetPixel(dithermask,x,y) ) > 127) )
+//			{
+//				pixeltypes.push_back(alpha);
+//				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
+//				hsv.a = 128;
+//				pixels.push_back(hsv);
+//			}
+//			else
+//			{
+//				pixeltypes.push_back(normal);
+//				HSVA hsv = RGBA_2_HSVA( GetPixel(image,x,y) );
+//				pixels.push_back(hsv);
+//			}
+//		}
+//	}
+//}
+//
+//SDL_Surface* Anim::CIS::MakeSurface()
+//{
+//	SDL_Surface* srf;
+//	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
+//	int mask = SDL_HWSURFACE;
+//	if( has_trans || has_dither )
+//		mask |= SDL_SRCCOLORKEY;
+//	srf = Anim::MakeSurface(w,h,pf,mask);
+//	//srf = SDL_CreateRGBSurface(mask,w,h,pf->BitsPerPixel,pf->Rmask,pf->Gmask,pf->Bmask,pf->Amask);
+//	assert(srf);
+//	SDL_LockSurface(srf);
+//	int x,y;
+//	pf = srf->format;
+//	int i=0;
+//
+//	for(y=0;y<h;++y)
+//	{
+//		unsigned char* ptr = (unsigned char*) srf->pixels;
+//		ptr += (srf->pitch) * y;
+//
+//		for(x=0;x<w;++x)
+//		{
+//			RGBA pp = HSVA_2_RGBA(pixels[i]);
+//			if(has_trans || has_dither)
+//			{
+//				if( pp.r==255 && pp.g==0 && pp.b==255 )
+//					pp.g = 1;
+//			}
+//			unsigned long pix;
+//			if(pixeltypes[i]==alpha)
+//				if( /*(((y-hy)%2)==1) &&*/ (((x+y-hx-hy)%2)!=0) )
+//					pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
+//				else
+//					pix = SDL_MapRGB(pf,255,0,255);
+//			else if(pixeltypes[i]==trans)
+//				pix = SDL_MapRGB(pf,255,0,255);
+//			else
+//				pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
+//			for(int j=0;j<pf->BytesPerPixel;++j)
+//			{
+//				(*ptr) = (unsigned char)(pix&255);
+//				pix = pix >> 8;
+//				++ptr;
+//			}
+//			++i;
+//		}
+//	}
+//	SDL_UnlockSurface(srf);
+//
+//	if( has_trans || has_dither )
+//	{
+//		SDL_SetColorKey( srf,SDL_SRCCOLORKEY, SDL_MapRGB(pf,255,0,255) );
+//	}
+//	return srf;
+//}
+//
+//SDL_Surface* Anim::CIS::MakeSurface(unsigned char alpha,unsigned char hue)
+//{
+//	SDL_Surface* srf;
+//	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
+//	int mask = SDL_HWSURFACE | SDL_SRCALPHA;
+//	srf = SDL_CreateRGBSurface(mask,w,h,32,0xFF0000ul,0xFF00ul,0xFFul,0xFF000000ul);
+//	assert(srf);
+//	SDL_LockSurface(srf);
+//	int x,y;
+//	pf = srf->format;
+//	int i=0;
+//
+//	for(y=0;y<h;++y)
+//	{
+//		unsigned char* ptr = (unsigned char*) srf->pixels;
+//		ptr += (srf->pitch) * y;
+//
+//		for(x=0;x<w;++x)
+//		{
+//			if(pixeltypes[i]==colimp)
+//				pixels[i].h = hue;
+//			RGBA pp = HSVA_2_RGBA(pixels[i]);
+//			unsigned long pix;
+//			if(pixeltypes[i]==alpha)
+//				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,alpha);
+//			else if(pixeltypes[i]==trans)
+//				pix = SDL_MapRGBA(pf,0,0,0,0);
+//			else
+//				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,255);
+//			for(int j=0;j<pf->BytesPerPixel;++j)
+//			{
+//				(*ptr) = (unsigned char)(pix&255);
+//				pix = pix >> 8;
+//				++ptr;
+//			}
+//			++i;
+//		}
+//	}
+//	SDL_UnlockSurface(srf);
+//
+//	return srf;
+//}
+//
+//SDL_Surface* Anim::CIS::MakeSurface(unsigned char hue)
+//{
+//	int i,sz = w*h;
+//	for(i=0;i<sz;++i)
+//	{
+//		if( pixeltypes[i] == colimp )
+//		{
+//			pixels[i].h = hue;
+//		}
+//	}
+//	return MakeSurface();
+//}
+//
+void Anim::CIS::Unimport()
 {
 	int i,sz = w*h;
 	for(i=0;i<sz;++i)
@@ -1329,7 +1360,7 @@ void C35::CIS::Unimport()
 	}
 }
 
-void C35::CIS::MakeDark()
+void Anim::CIS::MakeDark()
 {
 	int i,sz = w*h;
 	for(i=0;i<sz;++i)
@@ -1346,7 +1377,7 @@ void C35::CIS::MakeDark()
 	}
 }
 
-void C35::CIS::MakeWhite()
+void Anim::CIS::MakeWhite()
 {
 	int i,sz = w*h;
 	for(i=0;i<sz;++i)
@@ -1363,7 +1394,7 @@ void C35::CIS::MakeWhite()
 	}
 }
 
-C35::CIS C35::CIS::Flip(bool fx,bool fy,bool rot)
+Anim::CIS Anim::CIS::Flip(bool fx,bool fy,bool rot)
 {
 	CIS cis;
 
@@ -1404,9 +1435,9 @@ C35::CIS C35::CIS::Flip(bool fx,bool fy,bool rot)
 	return cis;
 }
 
-C35::Surface& C35::CIS::Get(UC hue)
+Anim::Surface& Anim::CIS::Get(UC hue)
 {
-	map<UC,Surface>::iterator iter;
+	std::map<UC,Surface>::iterator iter;
 	if(!has_colimp)
 		iter = instance.begin();
 	else
@@ -1415,7 +1446,7 @@ C35::Surface& C35::CIS::Get(UC hue)
 	return iter->second ;
 }
 
-void C35::CIS::Instance(UC hue)
+void Anim::CIS::Instance(UC hue)
 {
 	if(!has_colimp)
 	{
@@ -1429,13 +1460,13 @@ void C35::CIS::Instance(UC hue)
 	}
 }
 
-void C35::CIS::FreeData()
+void Anim::CIS::FreeData()
 {
 	pixeltypes.clear();
 	pixels.clear();
 }
 
-void C35::CIS::UnInstance()
+void Anim::CIS::UnInstance()
 {
 	for( auto itr : instance )
 		itr.second.Free();
@@ -1446,7 +1477,7 @@ void C35::CIS::UnInstance()
 // *** AnimReflection ***
 // **********************
 
-bool C35::AnimReflection::Next()
+bool Anim::AnimReflection::Next()
 {
 	if(!ba) return false;
 	time = 0;
@@ -1458,20 +1489,20 @@ bool C35::AnimReflection::Next()
 	return true;
 }
 
-void C35::AnimReflection::Start()
+void Anim::AnimReflection::Start()
 {
-	last=SDL_GetTicks();
+	//last=SDL_GetTicks();
 }
 
-bool C35::AnimReflection::Update()
+bool Anim::AnimReflection::Update()
 {
-	int ii = SDL_GetTicks();
-	bool ok = Update( last - ii );
-	last = ii;
+	//int ii = SDL_GetTicks();
+	bool ok = true; //Update( last - ii );
+	//last = ii;
 	return ok;
 }
 
-bool C35::AnimReflection::Update(int ms)
+bool Anim::AnimReflection::Update(int ms)
 {
 	if( (!ba) || (!ba->delay) ) return false;
 	time += ms;
@@ -1489,27 +1520,27 @@ bool C35::AnimReflection::Update(int ms)
 	return true;
 }
 
-void C35::AnimReflection::Overlay( SDL_Surface* dst, int x,int y )
+/*void Anim::AnimReflection::Overlay( SDL_Surface* dst, int x,int y )
 {
 	if(ba)
 		ba->Get(current,hue).Overlay(dst,x,y);
 	else if(cis)
 		cis->Get(hue).Overlay(dst,x,y);
-}
+}*/
 
-void C35::AnimReflection::Set(BasicAnim* b,UC h)
+void Anim::AnimReflection::Set(BasicAnim* b,UC h)
 {
 	clr(); ba=b; hue=h;
 }
-void C35::AnimReflection::Set(CIS* c,UC h)
+void Anim::AnimReflection::Set(CIS* c,UC h)
 {
 	clr(); cis=c; hue=h;
 }
-C35::AnimReflection::AnimReflection() { clr(); }
-C35::AnimReflection::AnimReflection(BasicAnim* b,UC h) { clr(); Set(b,h); }
-C35::AnimReflection::AnimReflection(CIS* c,UC h) { clr(); Set(c,h); }
+Anim::AnimReflection::AnimReflection() { clr(); }
+Anim::AnimReflection::AnimReflection(BasicAnim* b,UC h) { clr(); Set(b,h); }
+Anim::AnimReflection::AnimReflection(CIS* c,UC h) { clr(); Set(c,h); }
 
-void C35::AnimReflection::clr()
+void Anim::AnimReflection::clr()
 {
 	cis=0; ba=0;
 	current=time=last=loopcnt=0;
@@ -1520,12 +1551,12 @@ void C35::AnimReflection::clr()
 // *** BasicAnim ***
 // *****************
 
-bool C35::BasicAnim::LoadExt(string fn)
+bool Anim::BasicAnim::LoadExt(std::string fn)
 {
-	string ext = ExtractFileExt(fn);
+	std::string ext = ExtractFileExt(fn);
 	if(ext=="ba")
 	{
-		ifstream ifs(fn,ios::in|ios::binary);
+		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
@@ -1540,43 +1571,43 @@ bool C35::BasicAnim::LoadExt(string fn)
 	return false;
 }
 
-C35::AnimReflection C35::BasicAnim::Refl(UC hue)
+Anim::AnimReflection Anim::BasicAnim::Refl(UC hue)
 {
 	AnimReflection ar(this,hue);
 	return ar;
 }
 
-C35::Surface& C35::BasicAnim::Get( int f, UC hue )
+Anim::Surface& Anim::BasicAnim::Get( int f, UC hue )
 {
 	return anim[f].Get(hue);
 }
 
-void C35::BasicAnim::Instance(UC hue)
+void Anim::BasicAnim::Instance(UC hue)
 {
 	for(CIS& cis : anim)
 		cis.Instance(hue);
 }
 
-void C35::BasicAnim::UnInstance()
+void Anim::BasicAnim::UnInstance()
 {
 	for(CIS& cis : anim)
 		cis.UnInstance();
 }
 
-void C35::BasicAnim::FreeData()
+void Anim::BasicAnim::FreeData()
 {
 	for(CIS& cis : anim)
 		cis.FreeData();
 }
 
-void C35::BasicAnim::SaveInternal(ostream& os)
+void Anim::BasicAnim::SaveInternal(std::ostream& os)
 {
 	std::int16_t val = anim.size();
 	WriteBinary( os, val );
 	for(int i=0;i<val;++i)
 		anim[i].Save(os);
 }
-void C35::BasicAnim::LoadInternal(istream& is,bool old)
+void Anim::BasicAnim::LoadInternal(std::istream& is,bool old)
 {
 	std::int16_t val;
 	ReadBinary( is, val );
@@ -1592,7 +1623,7 @@ void C35::BasicAnim::LoadInternal(istream& is,bool old)
 	}
 }
 
-void C35::BasicAnim::LoadOld( istream& is )
+void Anim::BasicAnim::LoadOld( std::istream& is )
 {
 	ReadBinary( is, delay );
 	std::int16_t val;
@@ -1602,7 +1633,7 @@ void C35::BasicAnim::LoadOld( istream& is )
 	LoadInternal(is,true);
 }
 
-void C35::BasicAnim::SaveOld( ostream& os )
+void Anim::BasicAnim::SaveOld( std::ostream& os )
 {
 	WriteBinary( os, delay );
 	std::int16_t val = (short)repeating;
@@ -1610,13 +1641,13 @@ void C35::BasicAnim::SaveOld( ostream& os )
 	SaveInternal(os);
 }
 
-void C35::BasicAnim::Load( istream& is )
+void Anim::BasicAnim::Load( std::istream& is )
 {
 	char buff[5] = {};
 	is.read(buff,4);
-	if( string(buff) != "BA_2" )
+	if( std::string(buff) != "BA_2" )
 	{
-		is.seekg(-4, ios_base::cur);
+		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
@@ -1629,7 +1660,7 @@ void C35::BasicAnim::Load( istream& is )
 	}
 }
 
-void C35::BasicAnim::Save( ostream& os )
+void Anim::BasicAnim::Save( std::ostream& os )
 {
 	os.write("BA_2",4);
 	WriteBinary( os, delay );
@@ -1640,7 +1671,7 @@ void C35::BasicAnim::Save( ostream& os )
 	SaveInternal(os);
 }
 
-void C35::BasicAnim::MakeMirror( BasicAnim& ba, bool mx, bool my, bool rot)
+void Anim::BasicAnim::MakeMirror( BasicAnim& ba, bool mx, bool my, bool rot)
 {
 	delay = ba.delay;
 	repeating = ba.repeating;
@@ -1654,12 +1685,12 @@ void C35::BasicAnim::MakeMirror( BasicAnim& ba, bool mx, bool my, bool rot)
 // *** AnimDir ***
 // ***************
 
-bool C35::AnimDir::LoadExt(string fn)
+bool Anim::AnimDir::LoadExt(std::string fn)
 {
-	string ext = ExtractFileExt(fn);
+	std::string ext = ExtractFileExt(fn);
 	if(ext=="ad")
 	{
-		ifstream ifs(fn,ios::in|ios::binary);
+		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
@@ -1676,25 +1707,25 @@ bool C35::AnimDir::LoadExt(string fn)
 }
 
 
-void C35::AnimDir::Instance(UC hue)
+void Anim::AnimDir::Instance(UC hue)
 {
 	for(BAD& b : bad)
 		b.Instance(hue);
 }
 
-void C35::AnimDir::UnInstance()
+void Anim::AnimDir::UnInstance()
 {
 	for(BAD& b : bad)
 		b.UnInstance();
 }
 
-void C35::AnimDir::FreeData()
+void Anim::AnimDir::FreeData()
 {
 	for(BAD& b : bad)
 		b.FreeData();
 }
 
-void C35::AnimDir::LoadInternal(istream& is,bool old)
+void Anim::AnimDir::LoadInternal(std::istream& is,bool old)
 {
 	std::int16_t i,n;
 	ReadBinary(is,n);
@@ -1725,13 +1756,13 @@ void C35::AnimDir::LoadInternal(istream& is,bool old)
 	Mirror();
 }
 
-void C35::AnimDir::LoadOld(istream& is) { LoadInternal(is,true); }
+void Anim::AnimDir::LoadOld(std::istream& is) { LoadInternal(is,true); }
 
-void C35::AnimDir::Load(istream& is)
+void Anim::AnimDir::Load(std::istream& is)
 {
 	char buff[5] = {};
 	is.read(buff,4);
-	if( string(buff) != "AD_2" )
+	if( std::string(buff) != "AD_2" )
 	{
 		is.seekg(-4, ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
@@ -1741,7 +1772,7 @@ void C35::AnimDir::Load(istream& is)
 	}
 }
 
-void C35::AnimDir::SaveInternal(ostream& os)
+void Anim::AnimDir::SaveInternal(std::ostream& os)
 {
 	short i,n = bad.size();
 	WriteBinary(os,n);
@@ -1764,15 +1795,15 @@ void C35::AnimDir::SaveInternal(ostream& os)
 	}
 }
 
-void C35::AnimDir::SaveOld(ostream& os) { SaveInternal(os); }
+void Anim::AnimDir::SaveOld(std::ostream& os) { SaveInternal(os); }
 
-void C35::AnimDir::Save(ostream& os)
+void Anim::AnimDir::Save(std::ostream& os)
 {
 	os.write("AD_2",4);
 	SaveInternal(os);
 }
 
-C35::AnimDir::BAD* C35::AnimDir::findexact(short d)
+Anim::AnimDir::BAD* Anim::AnimDir::findexact(short d)
 {
 	for( BAD& bd : bad )
 	{
@@ -1781,8 +1812,8 @@ C35::AnimDir::BAD* C35::AnimDir::findexact(short d)
 	return 0;
 }
 
-
-int C35::AnimDir::UseAsFont( SDL_Surface* d, Pos p, UC hue, string s)
+/*
+int Anim::AnimDir::UseAsFont( SDL_Surface* d, Pos p, UC hue, string s)
 {
 	int xx = 0;
 	for(char c : s)
@@ -1796,19 +1827,19 @@ int C35::AnimDir::UseAsFont( SDL_Surface* d, Pos p, UC hue, string s)
 	}
 	return xx;
 }
+*/
 
-
-C35::AnimReflection C35::AnimDir::Refl(short dir,UC hue)
+Anim::AnimReflection Anim::AnimDir::Refl(short dir,UC hue)
 {
 	return Closest(dir).Refl(hue);
 }
 
-C35::BasicAnim& C35::AnimDir::Closest(short dir)
+Anim::BasicAnim& Anim::AnimDir::Closest(short dir)
 {
 	return BestFit<BasicAnim>(dir,bad);
 }
 
-/*void C35::AnimDir::Scale150()
+/*void Anim::AnimDir::Scale150()
 {
 	for(BAD& a:bad)
 		if(!a.mirror)
@@ -1816,7 +1847,7 @@ C35::BasicAnim& C35::AnimDir::Closest(short dir)
 	Mirror();
 }*/
 
-void C35::AnimDir::Mirror()
+void Anim::AnimDir::Mirror()
 {
 	for(BAD& a:bad)
 		if(a.mirror)
@@ -1827,25 +1858,25 @@ void C35::AnimDir::Mirror()
 // *** NAV ***
 // ***********
 
-string ExtractFileNameOnly(string fn)
+std::string ExtractFileNameOnly(std::string fn)
 {
 	auto p1 = fn.find_last_of("/\\");
-	if(p1==string::npos) p1=0;
+	if(p1==std::string::npos) p1=0;
 	auto p2 = fn.find_last_of(".");
-	if( p2<p1 ) p2 = string::npos;
-	if(p2==string::npos)
+	if( p2<p1 ) p2 = std::string::npos;
+	if(p2==std::string::npos)
 		return fn.substr(p1+1);
 	else
 		return fn.substr(p1+1,p2-p1);
 
 }
 
-bool C35::NAV::LoadExt(string fn)
+bool Anim::NAV::LoadExt(std::string fn)
 {
-	string ext = ExtractFileExt(fn);
+	std::string ext = ExtractFileExt(fn);
 	if(ext=="nav")
 	{
-		ifstream ifs(fn,ios::in|ios::binary);
+		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
@@ -1861,81 +1892,81 @@ bool C35::NAV::LoadExt(string fn)
 	return false;
 }
 
-void C35::NAV::Instance(UC hue)
+void Anim::NAV::Instance(UC hue)
 {
-	for( AnimDir& ad : variants )
+	for (AnimDir& ad : variants)
 		ad.Instance(hue);
 }
 
-void C35::NAV::UnInstance()
+void Anim::NAV::UnInstance()
 {
-	for( AnimDir& ad : variants )
+	for (AnimDir& ad : variants)
 		ad.UnInstance();
 }
 
-void C35::NAV::FreeData()
+void Anim::NAV::FreeData()
 {
-	for( AnimDir& ad : variants )
+	for (AnimDir& ad : variants)
 		ad.FreeData();
 }
 
-static std::string LoadStr( std::istream& is )
+static std::string LoadStr(std::istream& is)
 {
 	std::string s;
-	while(true)
+	while (true)
 	{
 		char c;
-		ReadBinary(is,c);
+		ReadBinary(is, c);
 		if (!c) break;
 		s += c;
 	}
 	return s;
 }
 
-static void SaveStr( std::ostream& os, std::string str )
+static void SaveStr(std::ostream& os, std::string str)
 {
-	os.write( str.c_str(), str.size()+1 );
+	os.write(str.c_str(), str.size()+1);
 }
 
-void C35::NAV::LoadInternal( istream& is, bool old )
+void Anim::NAV::LoadInternal(std::istream& is, bool old)
 {
 	name = LoadStr(is);
 	char vars;
 	ReadBinary(is,vars);
 	variants.clear();
-	for(int i=0; i<vars; ++i)
+	for (int i=0; i<vars; ++i)
 	{
 		variants.emplace_back();
-		if(old)
+		if (old)
 			variants.back().LoadOld(is);
 		else
 			variants.back().Load(is);
 	}
 }
 
-void C35::NAV::SaveInternal( ostream& os )
+void Anim::NAV::SaveInternal(std::ostream& os)
 {
-	SaveStr(os,name);
+	SaveStr(os, name);
 	char n = variants.size();
-	WriteBinary(os,n);
-	for( AnimDir& ad : variants )
+	WriteBinary(os, n);
+	for (AnimDir& ad : variants)
 		ad.Save(os);
 }
 
-void C35::NAV::LoadOld(istream& is) { LoadInternal(is,true); }
-void C35::NAV::SaveOld(ostream& os) { SaveInternal(os); }
+void Anim::NAV::LoadOld(std::istream& is) { LoadInternal(is, true); }
+void Anim::NAV::SaveOld(std::ostream& os) { SaveInternal(os); }
 
-void C35::NAV::Save(ostream& os)
+void Anim::NAV::Save(std::ostream& os)
 {
 	os.write("NAV2",4);
 	SaveInternal(os);
 }
 
-void C35::NAV::Load(istream& is)
+void Anim::NAV::Load(std::istream& is)
 {
 	char buff[5] = {};
 	is.read(buff,4);
-	if( string(buff) != "NAV2" )
+	if (std::string(buff) != "NAV2")
 	{
 		is.seekg(-4, ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
@@ -1945,7 +1976,8 @@ void C35::NAV::Load(istream& is)
 	}
 }
 
-C35::AnimReflection C35::NAV::Refl(short dir,UC hue)
+auto Anim::NAV::Refl(short dir, UC hue)
+	-> AnimReflection
 {
 	int i = rand() % variants.size();
 	AnimReflection ar( & variants[i].Closest(dir), hue );
@@ -1958,22 +1990,22 @@ C35::AnimReflection C35::NAV::Refl(short dir,UC hue)
 // *** AnimCollection ***
 // **********************
 
-bool C35::AnimCollection::LoadExt(string fn)
+bool Anim::AnimCollection::LoadExt(std::string fn)
 {
 	string ext = ExtractFileExt(fn);
-	if(ext=="ac")
+	if (ext == "ac")
 	{
 		std::cout << "loading file " << fn << " ext " << ext << std::endl;
-		ifstream ifs(fn,ios::in|ios::binary);
+		ifstream ifs(fn, ios::in|ios::binary);
 		Load(ifs);
 		return true;
 	} else {
 		NAV* nav = new NAV();
-		if( nav->LoadExt(fn) )
+		if (nav->LoadExt(fn))
 		{
 			FreeData();
 			core.push_back(nav);
-			mappings[nav->name]=nav;
+			mappings[nav->name] = nav;
 			return true;
 		}
 		delete nav;
@@ -1981,128 +2013,129 @@ bool C35::AnimCollection::LoadExt(string fn)
 	return false;
 }
 
-void C35::AnimCollection::Instance(UC hue)
+void Anim::AnimCollection::Instance(UC hue)
 {
-	for(NAV* nav : core)
+	for (NAV* nav : core)
 		nav->Instance(hue);
 }
 
-void C35::AnimCollection::UnInstance()
+void Anim::AnimCollection::UnInstance()
 {
-	for(NAV* nav : core)
+	for (NAV* nav : core)
 		nav->UnInstance();
 }
 
-void C35::AnimCollection::FreeData()
+void Anim::AnimCollection::FreeData()
 {
-	for(NAV* nav : core)
+	for (NAV* nav : core)
 		nav->FreeData();
 }
 
-C35::AnimCollection::~AnimCollection()
+Anim::AnimCollection::~AnimCollection()
 {
 	UnInstance();
-	for(NAV* nav : core)
+	for (NAV* nav : core)
 		delete nav;
 }
 
-C35::AnimReflection C35::AnimCollection::Refl(string name,short dir,UC hue)
+auto Anim::AnimCollection::Refl(std::string name, short dir, UC hue)
+	-> AnimReflection
 {
 	auto itr = mappings.find(name);
 	auto end = mappings.end();
-	if( (itr==end) && default_anim.size() )
+	if ((itr==end) && default_anim.size())
 		itr = mappings.find(default_anim);
-	if(itr==end)
+	if (itr==end)
 		itr = mappings.find("default");
-	if(itr==end)
+	if (itr==end)
 		itr = mappings.find("idle");
-	if(itr==end)
+	if (itr==end)
 		itr = mappings.begin();
-	return itr->second->Refl(dir,hue);
+	return itr->second->Refl(dir, hue);
 }
 
-void C35::AnimCollection::AddVariant(string name,AnimDir ad)
+void Anim::AnimCollection::AddVariant(std::string name, AnimDir ad)
 {
 	auto itr = mappings.find(name);
-	if(itr==mappings.end())
+	if (itr == mappings.end())
 	{
 		NAV* nav = new NAV();
 		core.push_back(nav);
-		nav->name=name;
+		nav->name = name;
 		nav->variants.clear();
 		nav->variants.push_back(ad);
-		mappings[name]=nav;
+		mappings[name] = nav;
 	} else {
 		itr->second->variants.push_back(ad);
 	}
 }
 
-void C35::AnimCollection::LoadInternal( istream& is, bool old )
+void Anim::AnimCollection::LoadInternal(std::istream& is, bool old)
 {
 	core.clear();
 	mappings.clear();
 	char n;
 	ReadBinary(is,n);
 	core.reserve(n);
-	for(int i=0;i<n;++i)
+	for (int i=0; i<n; ++i)
 	{
 		NAV* nav = new NAV();
 		core.push_back(nav);
-		if(old)
+		if (old)
 			nav->LoadOld(is);
 		else
 			nav->Load(is);
-		mappings[ nav->name ] = nav;
+		mappings[nav->name] = nav;
 	}
 	ReadBinary(is,n);
-	for(int i=0;i<n;++i)
+	for (int i=0;i<n;++i)
 	{
-		string name  = LoadStr(is);
-		string mapof = LoadStr(is);
+		std::string name  = LoadStr(is);
+		std::string mapof = LoadStr(is);
 		auto itr = mappings.find(mapof);
-		assert(itr!=mappings.end());
+		assert(itr != mappings.end());
 		mappings[name] = itr->second;
 	}
 }
 
-void C35::AnimCollection::SaveInternal( ostream& os )
+void Anim::AnimCollection::SaveInternal(std::ostream& os)
 {
 	char n = core.size();
-	WriteBinary(os,n);
-	for( NAV* nav : core )
+	WriteBinary(os, n);
+	for (NAV* nav : core)
 	{
 		nav->Save(os);
 	}
 	char n2 = mappings.size() - n;
 	WriteBinary(os,n2);
-	if(!n2) return;
-	for( auto itr : mappings )
+	if (!n2) return;
+	for (auto itr : mappings)
 	{
-		if( itr.first == itr.second->name ) continue;
-		SaveStr( os, itr.first );
-		SaveStr( os, itr.second->name );
+		if (itr.first == itr.second->name) continue;
+		SaveStr(os, itr.first);
+		SaveStr(os, itr.second->name);
 		--n2;
 	}
 	assert(!n2);
 }
 
 
-void C35::AnimCollection::LoadOld(istream& is) { LoadInternal(is,true); }
-void C35::AnimCollection::SaveOld(ostream& os) { SaveInternal(os); }
+void Anim::AnimCollection::LoadOld(std::istream& is) { LoadInternal(is, true); }
+void Anim::AnimCollection::SaveOld(std::ostream& os) { SaveInternal(os); }
 
-void C35::AnimCollection::Save(ostream& os)
+void Anim::AnimCollection::Save(std::ostream& os)
 {
 	os.write("AC_2",4);
 	SaveInternal(os);
-	SaveStr(os,default_anim);
+	SaveStr(os, default_anim);
 }
 
-void C35::AnimCollection::Load(istream& is)
+void Anim::AnimCollection::Load(std::istream& is)
 {
 	char buff[5] = {};
 	std::cout << "Loading AC, at pos " << is.tellg() << std::endl;
 	is.read(buff,4);
-	if( string(buff) != "AC_2" )
+	if (std::string(buff) != "AC_2")
 	{
 		is.seekg(-4, ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
@@ -2110,30 +2143,30 @@ void C35::AnimCollection::Load(istream& is)
 		default_anim.clear();
 	} else {
 		LoadInternal(is);
-		default_anim=LoadStr(is);
+		default_anim = LoadStr(is);
 	}
 }
 
-std::vector<std::string> C35::AnimCollection::CoreNames()
+std::vector<std::string> Anim::AnimCollection::CoreNames()
 {
 	std::vector<std::string> sl;
-	for( NAV* nav : core )
+	for (NAV* nav : core)
 	{
-		sl.push_back( nav->name );
+		sl.push_back(nav->name);
 	}
 	return sl;
 }
 
-std::vector<std::string> C35::AnimCollection::AllNames()
+std::vector<std::string> Anim::AnimCollection::AllNames()
 {
 	std::vector<std::string> sl;
-	for( auto itr : mappings )
+	for (auto itr : mappings)
 	{
-		sl.push_back( itr.first );
+		sl.push_back(itr.first);
 	}
 	return sl;
 
-	DoAll< &NAV::DoAll< &AnimDir::DoAll< &BasicAnim::DoAll< &CIS::Crop > > > > ();
+	DoAll<&NAV::DoAll<&AnimDir::DoAll<&BasicAnim::DoAll<&CIS::Crop>>>>();
 
 }
 

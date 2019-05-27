@@ -43,9 +43,9 @@ namespace Anim
 
 		void Create(int,int);
 
-		SDL_Surface* SDL() const { return surface; }
+		//SDL_Surface* SDL() const { return surface; }
 
-		Surface() : surface(0)/*, owner(true)*/ {}
+		Surface() = default;
 
 		//~Surface() { if(owner) Free(); }
 		//Surface(const Surface& s) { (*this)=s; }
@@ -71,16 +71,16 @@ namespace Anim
 		bool Update(int);
 		void Start();
 		bool Update();
-		void Overlay( SDL_Surface*, int,int );
-		void Overlay( SDL_Surface* s, Pos p ) { Overlay(s,p.x,p.y); }
-		void Set(BasicAnim*,UC);
-		void Set(CIS*,UC);
+		//void Overlay( SDL_Surface*, int,int );
+		//void Overlay( SDL_Surface* s, Pos p ) { Overlay(s,p.x,p.y); }
+		void Set(BasicAnim*, UC);
+		void Set(CIS*, UC);
 		void Set(AnimReflection& ar) { (*this)=ar; }
 		void Set(AnimReflection&& ar) { (*this)=ar; }
 		AnimReflection();
-		AnimReflection(BasicAnim*,UC);
-		AnimReflection(CIS*,UC);
-		int Loopcnt() { return loopcnt; }
+		AnimReflection(BasicAnim*, UC);
+		AnimReflection(CIS*, UC);
+		int Loopcnt() const { return loopcnt; }
 	private:
 		void clr();
 		BasicAnim* ba;
@@ -107,16 +107,16 @@ namespace Anim
 		std::vector<HSVA> pixels;
 
 	public:
-		void Load( std::istream& );
-		void Save( std::ostream& , int=0 );
-		void FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask );
+		void Load(std::istream&);
+		void Save(std::ostream& , int=0);
+		//void FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask );
 
-		void LoadOld( std::istream& );
-		void SaveOld( std::ostream& );
+		void LoadOld(std::istream&);
+		void SaveOld(std::ostream&);
 
 		bool LoadExt(std::string);
 
-		CIS CutOut( int,int,int,int );
+		CIS CutOut(int,int, int,int);
 
 		AnimReflection Refl(UC hue);
 
@@ -132,11 +132,11 @@ namespace Anim
 		void Scale50() { HalfSizeMe(); }
 		void Unimport();
 
-		SDL_Surface* MakeSurface();
-		SDL_Surface* MakeSurface(UC hue); // dithered
-		SDL_Surface* MakeSurface(UC alpha,UC hue); // blended
+		//SDL_Surface* MakeSurface();
+		//SDL_Surface* MakeSurface(UC hue); // dithered
+		//SDL_Surface* MakeSurface(UC alpha,UC hue); // blended
 
-		CIS Flip(bool,bool=false,bool=false);
+		CIS Flip(bool, bool=false, bool=false);
 
 		Surface& Get(UC hue);
 
@@ -144,8 +144,9 @@ namespace Anim
 		void FreeData();
 		void UnInstance();
 
-		int Width() const { return w; } int Height() const { return h; }
-		Pos Hot() const { return Pos(hx,hy); }
+		int Width() const { return w; }
+		int Height() const { return h; }
+		Pos Hot() const { return Pos(hx, hy); }
 		void Hot(const Pos& p) { hx=p.x; hy=p.y; }
 
 		std::map<UC,Surface> instance;
@@ -170,9 +171,9 @@ namespace Anim
 		bool repeating;
 		std::int16_t jbf; // jump back frame
 		std::vector<CIS> anim;
-		void Load( std::istream& );
-		void Save( std::ostream& );
-		void MakeMirror( BasicAnim& , bool, bool, bool );
+		void Load(std::istream&);
+		void Save(std::ostream&);
+		void MakeMirror(BasicAnim& , bool, bool, bool);
 
 		template<ClosureCIS exe> void DoAll() { for(CIS& cis:anim) (cis.*exe)(); }
 
@@ -186,12 +187,13 @@ namespace Anim
 
 		AnimReflection Refl(UC);
 
-		Surface& Get( int, UC );
+		Surface& Get(int, UC);
 
-		void LoadOld(std::istream&),SaveOld(std::ostream&);
+		void LoadOld(std::istream&);
+		void SaveOld(std::ostream&);
 	private:
 		void SaveInternal(std::ostream&);
-		void LoadInternal(std::istream&,bool=false);
+		void LoadInternal(std::istream&, bool=false);
 	} BA;
 	typedef void (BasicAnim::*ClosureBA)();
 
@@ -207,22 +209,22 @@ namespace Anim
 		template<ClosureBA exe> void DoAll() { for(BAD& b:bad) (b.*exe)(); }
 
 		bool LoadExt(std::string);
-		void Load( std::istream& );
-		void Save( std::ostream& );
+		void Load(std::istream&);
+		void Save(std::ostream&);
 		BasicAnim& Closest(short);
 		void Mirror();
 		AnimReflection Refl(short,UC);
 
-		int UseAsFont( SDL_Surface*, Pos, UC, std::string );
+		//int UseAsFont(SDL_Surface*, Pos, UC, std::string);
 
 		void Instance(UC hue);
 		void FreeData();
 		void UnInstance();
 
-		void LoadOld(std::istream&),SaveOld(std::ostream&);
+		void LoadOld(std::istream&);
+		void SaveOld(std::ostream&);
 	private:
-		void SaveInternal(std::ostream&);
-		void LoadInternal(std::istream&,bool=false);
+		void SaveInternal(std::ostream&, bool=false);
 
 		BAD* findexact(short);
 
@@ -234,8 +236,8 @@ namespace Anim
 		std::vector<AnimDir> variants;
 		std::string name;
 		bool LoadExt(std::string);
-		void Load( std::istream& );
-		void Save( std::ostream& );
+		void Load(std::istream&);
+		void Save(std::ostream&);
 		AnimReflection Refl(short,UC);
 
 		void Instance(UC hue);
@@ -244,10 +246,11 @@ namespace Anim
 
 		template<ClosureAD exe> void DoAll() { for(AnimDir& ad:variants) (ad.*exe)(); }
 
-		void LoadOld(std::istream&),SaveOld(std::ostream&);
+		void LoadOld(std::istream&);
+		void SaveOld(std::ostream&);
 	private:
 		void SaveInternal(std::ostream&);
-		void LoadInternal(std::istream&,bool=false);
+		void LoadInternal(std::istream&, bool=false);
 
 	};
 	typedef void (NAV::*ClosureNAV)();
@@ -256,11 +259,11 @@ namespace Anim
 	{
 		void AddVariant(std::string,AnimDir);
 		std::vector<NAV*> core;
-		std::map<std::string,NAV*> mappings;
+		std::map<std::string, NAV*> mappings;
 		bool LoadExt(std::string);
-		void Load( std::istream& );
-		void Save( std::ostream& );
-		AnimReflection Refl(std::string,short,UC);
+		void Load(std::istream&);
+		void Save(std::ostream&);
+		AnimReflection Refl(std::string, short, UC);
 
 		std::string default_anim;
 
@@ -271,14 +274,19 @@ namespace Anim
 		std::vector<std::string> CoreNames();
 		std::vector<std::string> AllNames();
 
+		AnimCollection() = default;
+		AnimCollection(const AnimCollection&) = default;
+		AnimCollection(AnimCollection&&) = default;
+
 		~AnimCollection();
 
 		template<ClosureNAV exe> void DoAll() { for(NAV* nav:core) (nav->*exe)(); }
 
-		void LoadOld(std::istream&),SaveOld(std::ostream&);
+		void LoadOld(std::istream&);
+		void SaveOld(std::ostream&);
 	private:
 		void SaveInternal(std::ostream&);
-		void LoadInternal(std::istream&,bool=false);
+		void LoadInternal(std::istream&, bool=false);
 	} AC;
 
 }
