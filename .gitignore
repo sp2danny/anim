@@ -1,0 +1,7 @@
+*.out
+bin
+.clang
+.codelite
+anim.mk
+Makefile
+anim.txt
