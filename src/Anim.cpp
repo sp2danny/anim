@@ -219,7 +219,7 @@ std::string ExtractFileBase(std::string fn)
 	return ret;
 }
 
-extern Anim::CIS LoadPCX(const char* fn);
+// extern Anim::CIS LoadPCX(const char* fn);
 
 bool Anim::CIS::LoadExt(std::string fn)
 {
@@ -239,11 +239,11 @@ bool Anim::CIS::LoadExt(std::string fn)
 	//	FromImg(srf,tm,0,0);
 	//	return true;
 	//}
-	else if(ext=="pcx")
-	{
-		LoadPCX(fn.c_str());
-		return true;
-	}
+	//else if(ext=="pcx")
+	//{
+	//	LoadPCX(fn.c_str());
+	//	return true;
+	//}
 	return false;
 }
 /*
@@ -635,10 +635,13 @@ SDL_Surface* Anim::MakeTransMaskFromImage(SDL_Surface* img)
 	return tm;
 }
 */
+
+/*
 static int grayscale(Anim::RGBA p)
 {
 	return (p.r+p.g+p.b) / 3;
 }
+*/
 
 namespace
 {
@@ -1764,7 +1767,7 @@ void Anim::AnimDir::Load(std::istream& is)
 	is.read(buff,4);
 	if( std::string(buff) != "AD_2" )
 	{
-		is.seekg(-4, ios_base::cur);
+		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
@@ -1772,7 +1775,7 @@ void Anim::AnimDir::Load(std::istream& is)
 	}
 }
 
-void Anim::AnimDir::SaveInternal(std::ostream& os)
+void Anim::AnimDir::SaveInternal(std::ostream& os, bool)
 {
 	short i,n = bad.size();
 	WriteBinary(os,n);
@@ -1968,7 +1971,7 @@ void Anim::NAV::Load(std::istream& is)
 	is.read(buff,4);
 	if (std::string(buff) != "NAV2")
 	{
-		is.seekg(-4, ios_base::cur);
+		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
@@ -1992,11 +1995,11 @@ auto Anim::NAV::Refl(short dir, UC hue)
 
 bool Anim::AnimCollection::LoadExt(std::string fn)
 {
-	string ext = ExtractFileExt(fn);
+	std::string ext = ExtractFileExt(fn);
 	if (ext == "ac")
 	{
 		std::cout << "loading file " << fn << " ext " << ext << std::endl;
-		ifstream ifs(fn, ios::in|ios::binary);
+		std::ifstream ifs(fn, std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
@@ -2137,7 +2140,7 @@ void Anim::AnimCollection::Load(std::istream& is)
 	is.read(buff,4);
 	if (std::string(buff) != "AC_2")
 	{
-		is.seekg(-4, ios_base::cur);
+		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 		default_anim.clear();

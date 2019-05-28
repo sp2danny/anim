@@ -153,7 +153,7 @@ namespace Anim
 
 		CIS() : w(0), h(0), hx(0), hy(0), depth(4) { instance.clear(); has_dither=has_trans=has_colimp=false; } 
 
-		void LoadPCX(const char* fn);
+		//void LoadPCX(const char* fn);
 
 	private:
 		void LoadInternal( std::istream& );
@@ -225,6 +225,7 @@ namespace Anim
 		void SaveOld(std::ostream&);
 	private:
 		void SaveInternal(std::ostream&, bool=false);
+		void LoadInternal(std::istream&, bool=false);
 
 		BAD* findexact(short);
 
