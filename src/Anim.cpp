@@ -5,23 +5,30 @@
 
 #include <cassert>
 
+template <class C>
+constexpr auto ssize(const C& c) -> int
+{
+	return static_cast<int>(c.size());
+}
+
 template<typename T,typename U>
-T& BestFit( std::int16_t dir, U& vec )
+T& BestFit (std::int16_t dir, U& vec)
 {
 	auto dirdiff = [](std::int16_t d1,std::int16_t d2) -> short
 	{
 		std::int16_t df = abs(d1-d2);
-		if (df>180) df=360-180;
+		while (df>360) df -= 360;
+		if (df>180) df = 360 - df;
 		return df;
 	};
 
 	int idx=0;
 	int n = vec.size();
 	assert(n);
-	int srt = dirdiff( dir, vec[0].dir );
-	for (int i=1;i<n;++i)
+	int srt = dirdiff(dir, vec[0].dir);
+	for (int i=1; i<n; ++i)
 	{
-		int s = dirdiff( dir, vec[i].dir );
+		int s = dirdiff(dir, vec[i].dir);
 		if (s<srt)
 		{
 			srt=s;
@@ -112,7 +119,7 @@ void Anim::Surface::Overlay( Surface& dst, int x,int y ) const
 void Anim::Surface::Create(int w,int h)
 {
 	//surface = MakeSurface(w,h,SDL_GetVideoSurface()->format );
-	hx=hy=0;
+	hx = hy = 0;
 }
 
 void Anim::Surface::FromCIS(CIS& cis)
@@ -162,12 +169,13 @@ Anim::Surface Anim::Surface::Screen()
 //int Anim::Surface::Width()  const { return surface->w; }
 //int Anim::Surface::Height() const { return surface->h; }
 
-template <typename T> inline void ReadBinary( std::istream& istr , T& val )
+template <typename T>
+inline void ReadBinary(std::istream& istr, T& val)
 {
 	int i,n = sizeof(T);
 	char* p = (char*) &val;
 
-	for(i=0;i<n;++i)
+	for (i=0; i<n; ++i)
 	{
 		char c;
 		istr.read(&c,1);
@@ -176,12 +184,13 @@ template <typename T> inline void ReadBinary( std::istream& istr , T& val )
 	}
 }
 
-template <typename T> inline void WriteBinary( std::ostream& ostr , const T& val )
+template<typename T>
+inline void WriteBinary(std::ostream& ostr, const T& val)
 {
-	int i,n = sizeof(T);
+	int i, n = sizeof(T);
 	const char* p = (char*) &val;
 
-	for(i=0;i<n;++i)
+	for (i=0; i<n; ++i)
 	{
 		char c;
 		c = (*p);
@@ -197,14 +206,14 @@ template <typename T> inline void WriteBinary( std::ostream& ostr , const T& val
 
 Anim::AnimReflection Anim::CIS::Refl(UC hue)
 {
-	AnimReflection ar(this,hue);
+	AnimReflection ar(this, hue);
 	return ar;
 }
 
 std::string ExtractFileExt(std::string fn)
 {
 	auto p = fn.find_last_of('.');
-	if(p==std::string::npos) return "";
+	if (p==std::string::npos) return "";
 	std::string ret = fn.substr(p+1);
 	for ( char& c : ret ) c=std::tolower(c);
 	return ret;
@@ -213,7 +222,7 @@ std::string ExtractFileExt(std::string fn)
 std::string ExtractFileBase(std::string fn)
 {
 	auto p = fn.find_last_of('.');
-	if(p==std::string::npos) return fn;
+	if (p==std::string::npos) return fn;
 	std::string ret = fn.substr(0,p);
 	//for( char& c : ret ) c=tolower(c);
 	return ret;
@@ -224,7 +233,7 @@ std::string ExtractFileBase(std::string fn)
 bool Anim::CIS::LoadExt(std::string fn)
 {
 	std::string ext = ExtractFileExt(fn);
-	if(ext=="cis")
+	if (ext=="cis")
 	{
 		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		if(ifs.bad()) return false;
@@ -275,9 +284,9 @@ void Anim::CIS::LoadInternal( std::istream& is )
 	unsigned char c;
 	int leftbit = 0;
 
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
-		if(!leftbit)
+		if (!leftbit)
 		{
 			ReadBinary(is,c);
 			leftbit=8;
@@ -289,7 +298,7 @@ void Anim::CIS::LoadInternal( std::istream& is )
 
 		pixeltypes.push_back(pt);
 
-		switch(pt)
+		switch (pt)
 		{
 			case alpha:   has_dither = true; break;
 			case trans:   has_trans  = true; break;
@@ -304,7 +313,7 @@ void Anim::CIS::LoadInternal( std::istream& is )
 
 	auto GetC_4 = [&odd,&cc](std::istream& is) -> UC
 	{
-		if(!odd)
+		if (!odd)
 		{
 			odd=!odd;
 			ReadBinary(is,cc);
@@ -342,18 +351,18 @@ void Anim::CIS::LoadInternal( std::istream& is )
 
 	auto GetC = [&](std::istream& is) -> UC
 	{
-		/**/ if( this->depth==4 ) return GetC_4(is);
-		else if( this->depth==6 ) return GetC_6(is);
-		else if( this->depth==8 ) return GetC_8(is);
+		/**/ if (this->depth == 4) return GetC_4(is);
+		else if (this->depth == 6) return GetC_6(is);
+		else if (this->depth == 8) return GetC_8(is);
 		else { assert(false); return 0; }
 	};
 
 	pixels.clear();
 	pixels.reserve(sz);
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
 		HSVA p = { 0,0,0,255 };
-		switch(pixeltypes[i])
+		switch (pixeltypes[i])
 		{
 			case normal: p.h = GetC(is); p.s = GetC(is); p.v = GetC(is); break;
 			case colimp:                 p.s = GetC(is); p.v = GetC(is); break;
@@ -368,28 +377,28 @@ void Anim::CIS::LoadInternal( std::istream& is )
 	#endif
 }
 
-void Anim::CIS::SaveInternal( std::ostream& os )
+void Anim::CIS::SaveInternal(std::ostream& os)
 {
 	unsigned int i,sz = w*h;
 
 	assert(sz<=pixeltypes.size());
 	unsigned char c=0;
 	int leftbits = 0;
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
-		if(leftbits==8)
+		if (leftbits==8)
 		{
-			WriteBinary( os, c );
+			WriteBinary(os, c);
 			leftbits = 0;
-			c=0;
+			c = 0;
 		}
 		PixelType& pt = pixeltypes[i];
-		c = c | ( (pt&3) << leftbits );
+		c = c | ((pt&3) << leftbits);
 		leftbits += 2;
 
-		assert( (pt&3) == pt );
+		assert((pt&3) == pt);
 	}
-	if(leftbits!=0) WriteBinary( os, c );
+	if (leftbits!=0) WriteBinary(os, c);
 
 	int odd = 0;
 	UC cc;
@@ -403,25 +412,25 @@ void Anim::CIS::SaveInternal( std::ostream& os )
 		} else {
 			odd=!odd;
 			cc |= uc&0xF0;
-			WriteBinary(os,cc);
+			WriteBinary(os, cc);
 		}
 	};
 	auto Rem = [&odd,&cc](std::ostream& os) -> void
 	{
-		if(odd) WriteBinary(os,cc);
+		if(odd) WriteBinary(os, cc);
 	};
-	auto PutC_8 = [](std::ostream& os,UC uc) -> void
+	auto PutC_8 = [](std::ostream& os, UC uc) -> void
 	{
-		WriteBinary(os,uc);
+		WriteBinary(os, uc);
 	};
-	auto PutC_6 = [&](std::ostream& ,UC ) -> void
+	auto PutC_6 = [&](std::ostream&, UC) -> void
 	{
 		// later
 	};
 
 	auto PutC = [&](std::ostream& os,UC uc) -> void
 	{
-		switch(this->depth)
+		switch (this->depth)
 		{
 			case 4: PutC_4(os,uc); break;
 			case 6: PutC_6(os,uc); break;
@@ -431,13 +440,13 @@ void Anim::CIS::SaveInternal( std::ostream& os )
 	};
 
 	assert(sz<=pixels.size());
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
 		PixelType& pt = pixeltypes[i];
 		HSVA& p = pixels[i];
-		switch(pt)
+		switch (pt)
 		{
-			case trans: break;
+			case trans:                                                  break;
 			case normal: PutC(os, p.h ); PutC(os, p.s ); PutC(os, p.v ); break;
 			case alpha:  PutC(os, p.h ); PutC(os, p.s ); PutC(os, p.v ); break;
 			case colimp:                 PutC(os, p.s ); PutC(os, p.v ); break;
@@ -448,56 +457,56 @@ void Anim::CIS::SaveInternal( std::ostream& os )
 	Rem(os);
 }
 
-void Anim::CIS::LoadOld( std::istream& is )
+void Anim::CIS::LoadOld(std::istream& is)
 {
-	ReadBinary( is, w );
-	ReadBinary( is, h );
-	ReadBinary( is, hx );
-	ReadBinary( is, hy );
-	depth=4;
+	ReadBinary(is, w);
+	ReadBinary(is, h);
+	ReadBinary(is, hx);
+	ReadBinary(is, hy);
+	depth = 4;
 	LoadInternal(is);
 }
 
 void Anim::CIS::SaveOld( std::ostream& os )
 {
-	WriteBinary( os, w );
-	WriteBinary( os, h );
-	WriteBinary( os, hx );
-	WriteBinary( os, hy );
-	depth=4;
+	WriteBinary(os, w);
+	WriteBinary(os, h);
+	WriteBinary(os, hx);
+	WriteBinary(os, hy);
+	depth = 4;
 	SaveInternal(os);
 }
 
-void Anim::CIS::Load( std::istream& is )
+void Anim::CIS::Load(std::istream& is)
 {
 	char buff[5] = {};
 
 	is.read(buff,4);
-	if( std::string(buff) != "CIS2" )
+	if (std::string(buff) != "CIS2")
 	{
 		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
-		ReadBinary( is, w );
-		ReadBinary( is, h );
-		ReadBinary( is, hx );
-		ReadBinary( is, hy );
-		ReadBinary( is, depth );
+		ReadBinary(is, w);
+		ReadBinary(is, h);
+		ReadBinary(is, hx);
+		ReadBinary(is, hy);
+		ReadBinary(is, depth);
 		LoadInternal(is);
 	}
 }
 
-void Anim::CIS::Save( std::ostream& os, int dep )
+void Anim::CIS::Save(std::ostream& os, int dep)
 {
-	os.write( "CIS2" , 4 );
-	WriteBinary( os, w );
-	WriteBinary( os, h );
-	WriteBinary( os, hx );
-	WriteBinary( os, hy );
-	if(dep) depth=dep;
-	if(!depth) depth=4;
-	WriteBinary( os, depth );
+	os.write("CIS2" , 4);
+	WriteBinary(os, w);
+	WriteBinary(os, h);
+	WriteBinary(os, hx);
+	WriteBinary(os, hy);
+	if (dep) depth = dep;
+	if (!depth) depth = 4;
+	WriteBinary(os, depth);
 	SaveInternal(os);
 }
 
@@ -508,7 +517,7 @@ Anim::RGBA Anim::HSVA_2_RGBA( const HSVA& hsv )
 
 	unsigned char reg, rem, p,q,t;
 
-	if(hsv.s == 0)
+	if (hsv.s == 0)
 	{
 		rgb.r = hsv.v;
 		rgb.g = hsv.v;
@@ -523,7 +532,7 @@ Anim::RGBA Anim::HSVA_2_RGBA( const HSVA& hsv )
 	q = (hsv.v * (255 - ((hsv.s*rem) >> 8 ))) >> 8;
 	t = (hsv.v * (255 - ((hsv.s * (255-rem)) >> 8))) >> 8;
 
-	switch(reg)
+	switch (reg)
 	{
 		case 0:  rgb.r = hsv.v; rgb.g = t;     rgb.b = p;     break;
 		case 1:  rgb.r = q;     rgb.g = hsv.v; rgb.b = p;     break;
@@ -554,9 +563,9 @@ Anim::HSVA Anim::RGBA_2_HSVA( const RGBA& rgb )
 	hsv.s = 255 * delta / hsv.v;
 	if(!hsv.s) return hsv;
 
-	/**/ if( rgb_max == rgb.r ) { hsv.h =   0 + 43 * (rgb.g-rgb.b) / delta; }
-	else if( rgb_max == rgb.g ) { hsv.h =  85 + 43 * (rgb.b-rgb.r) / delta; }
-	else if( rgb_max == rgb.b ) { hsv.h = 171 + 43 * (rgb.r-rgb.g) / delta; }
+	/**/ if (rgb_max == rgb.r) { hsv.h =   0 + 43 * (rgb.g-rgb.b) / delta; }
+	else if (rgb_max == rgb.g) { hsv.h =  85 + 43 * (rgb.b-rgb.r) / delta; }
+	else if (rgb_max == rgb.b) { hsv.h = 171 + 43 * (rgb.r-rgb.g) / delta; }
 	else assert(false);
 
 	return hsv;
@@ -658,27 +667,27 @@ namespace
 	{
 		unsigned int count[4] = {0,0,0,0};
 
-		for(const Pix& p : pa)
+		for (const Pix& p : pa)
 		{
 			count[ p.pt ] ++;
 		}
 
-		bool found=false;
-		int c,pt;
-		for( c=0; c<4; ++c )
+		bool found = false;
+		int c, pt;
+		for (c=0; c<4; ++c)
 		{
-			if( count[c] > (pa.size()/2) )
+			if (count[c] > (pa.size()/2))
 			{
 				found=true;
 				pt=c;
 			}
 		}
-		if(!found) return false;
+		if (!found) return false;
 
 		int h=0,s=0,v=0,a=0;
-		for(const Pix& p : pa)
+		for (const Pix& p : pa)
 		{
-			if( p.pt == pt )
+			if (p.pt == pt)
 			{
 				h += p.hsv.h;
 				s += p.hsv.s;
@@ -708,15 +717,15 @@ void Anim::CIS::Scale150w()
 	HSVA hsv1, hsv2;
 
 	int ww = 0;
-	for(x=0; x<w; ++x)
+	for (x=0; x<w; ++x)
 	{
 		++ww;
-		if( ((x%2)==0) && ((x+1)<w) ) ++ww;
+		if (((x%2)==0) && ((x+1)<w)) ++ww;
 	}
 
-	for(y=0; y<h; ++y)
+	for (y=0; y<h; ++y)
 	{
-		for(x=0; x<w; ++x)
+		for (x=0; x<w; ++x)
 		{
 			curr = pixeltypes[i];
 			hsv1 = pixels[i];
@@ -724,29 +733,29 @@ void Anim::CIS::Scale150w()
 			pt2.push_back(curr);
 			p2.push_back(hsv1);
 
-			if( ((x%2)==0) && ((x+1)<w) )
+			if (((x%2)==0) && ((x+1)<w))
 			{
 				Pixels pp; Pix m;
-				pp.push_back( Pix(curr,hsv1) );
+				pp.push_back(Pix(curr,hsv1));
 				next = pixeltypes[i+1];
 				hsv2 = pixels[i+1];
-				pp.push_back( Pix(next,hsv2) );
-				if(HasMajority(pp,m))
+				pp.push_back(Pix(next,hsv2));
+				if (HasMajority(pp,m))
 				{
 					pt2.push_back(m.pt);
 					p2.push_back(m.hsv);
 				} else {
-					if( y>0 )
+					if (y>0)
 					{
-						pp.push_back( Pix(pixeltypes[i-w],pixels[i-w]) );
-						pp.push_back( Pix(pixeltypes[i-w+1],pixels[i-w+1]) );
+						pp.push_back(Pix(pixeltypes[i-w],pixels[i-w]));
+						pp.push_back(Pix(pixeltypes[i-w+1],pixels[i-w+1]));
 					}
-					if( (y+1)<h )
+					if ((y+1)<h)
 					{
-						pp.push_back( Pix(pixeltypes[i+w],pixels[i+w]) );
-						pp.push_back( Pix(pixeltypes[i+w+1],pixels[i+w+1]) );
+						pp.push_back(Pix(pixeltypes[i+w],pixels[i+w]));
+						pp.push_back(Pix(pixeltypes[i+w+1],pixels[i+w+1]));
 					}
-					if(HasMajority(pp,m))
+					if (HasMajority(pp,m))
 					{
 						pt2.push_back(m.pt);
 						p2.push_back(m.hsv);
@@ -765,10 +774,10 @@ void Anim::CIS::Scale150w()
 	hx += hx/2;
 
 	pixeltypes.clear();
-	pixeltypes.assign( pt2.begin(), pt2.end() );
+	pixeltypes.assign(pt2.begin(), pt2.end());
 
 	pixels.clear();
-	pixels.assign( p2.begin(), p2.end() );
+	pixels.assign(p2.begin(), p2.end());
 }
 
 void Anim::CIS::Skip3()
@@ -776,22 +785,22 @@ void Anim::CIS::Skip3()
 	std::vector<PixelType> pt2;
 	std::vector<HSVA> p2;
 
-	int x,y;
-	int nw=0,nh=0;
-	for(x=0;x<w;++x) if( (x%3)!=2 ) ++nw;
-	for(y=0;y<h;++y) if( (y%3)!=2 ) ++nh;
+	int x, y;
+	int nw=0, nh=0;
+	for (x=0; x<w; ++x) if((x%3) != 2) ++nw;
+	for (y=0; y<h; ++y) if((y%3) != 2) ++nh;
 
 	pt2.reserve(nw*nh);
 	p2.reserve(nw*nh);
 
-	for(y=0;y<h;++y)
+	for (y=0; y<h; ++y)
 	{
-		if( (y%3)==2 ) continue;
-		for(x=0;x<w;++x)
+		if ((y%3) == 2) continue;
+		for (x=0; x<w; ++x)
 		{
-			if( (x%3)==2 ) continue;
-			int i=y*w+x;
-			pt2.push_back( pixeltypes[i]);
+			if ((x%3) == 2) continue;
+			int i = y*w+x;
+			pt2.push_back(pixeltypes[i]);
 			p2.push_back(pixels[i]);
 		}
 	}
@@ -817,17 +826,17 @@ void Anim::CIS::Scale150h()
 	HSVA hsv1, hsv2;
 
 	int hh = 0;
-	for(y=0;y<h;++y)
+	for (y=0; y<h; ++y)
 	{
 		++hh;
-		if( ((y%2)==0) && ((y+1)<h) )
+		if (((y%2)==0) && ((y+1)<h))
 			++hh;
 	}
 
-	for(y=0;y<h;++y)
+	for (y=0; y<h; ++y)
 	{
-		i=y*w;
-		for(x=0;x<w;++x)
+		i = y*w;
+		for (x=0; x<w; ++x)
 		{
 			curr = pixeltypes[i];
 			hsv1 = pixels[i];
@@ -837,10 +846,10 @@ void Anim::CIS::Scale150h()
 			++i;
 		}
 
-		if( ((y%2)==0) && ((y+1)<h) )
+		if (((y%2)==0) && ((y+1)<h))
 		{
 			i=y*w;
-			for(x=0;x<w;++x)
+			for (x=0; x<w; ++x)
 			{
 				curr = pixeltypes[i];
 				hsv1 = pixels[i];
@@ -855,17 +864,17 @@ void Anim::CIS::Scale150h()
 					pt2.push_back(m.pt);
 					p2.push_back(m.hsv);
 				} else {
-					if( x>0 )
+					if (x>0)
 					{
-						pp.push_back( Pix(pixeltypes[i-1],pixels[i-1]) );
-						pp.push_back( Pix(pixeltypes[i+w-1],pixels[i+w-1]) );
+						pp.push_back(Pix(pixeltypes[i-1], pixels[i-1]));
+						pp.push_back(Pix(pixeltypes[i+w-1], pixels[i+w-1]));
 					}
-					if( (x+1)<w )
+					if ((x+1) < w)
 					{
-						pp.push_back( Pix(pixeltypes[i+1],pixels[i+1]) );
-						pp.push_back( Pix(pixeltypes[i+w+1],pixels[i+w+1]) );
+						pp.push_back(Pix(pixeltypes[i+1], pixels[i+1]));
+						pp.push_back(Pix(pixeltypes[i+w+1], pixels[i+w+1]));
 					}
-					if(HasMajority(pp,m))
+					if (HasMajority(pp,m))
 					{
 						pt2.push_back(m.pt);
 						p2.push_back(m.hsv);
@@ -885,10 +894,10 @@ void Anim::CIS::Scale150h()
 	hy += hy/2;
 
 	pixeltypes.clear();
-	pixeltypes.assign( pt2.begin(), pt2.end() );
+	pixeltypes.assign(pt2.begin(), pt2.end());
 
 	pixels.clear();
-	pixels.assign( p2.begin(), p2.end() );
+	pixels.assign(p2.begin(), p2.end());
 }
 
 void Anim::CIS::Scale50w()
@@ -903,17 +912,17 @@ void Anim::CIS::Scale50w()
 	small.pixels.clear();
 	small.pixels.reserve(n);
 
-	small.has_colimp =false;
-	small.has_dither =false;
-	small.has_trans  =false;
+	small.has_colimp = false;
+	small.has_dither = false;
+	small.has_trans  = false;
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
+	auto mkpix = [&](PixelType pt, const std::vector<HSVA>& pix) -> void
 	{
-		if(pt==alpha)  small.has_dither =true;
-		if(pt==trans)  small.has_trans  =true;
-		if(pt==colimp) small.has_colimp =true;
+		if (pt==alpha)  small.has_dither = true;
+		if (pt==trans)  small.has_trans  = true;
+		if (pt==colimp) small.has_colimp = true;
 
 		int h=0,s=0,v=0;
 		for( const HSVA& hsv : pix )
@@ -928,15 +937,15 @@ void Anim::CIS::Scale50w()
 		small.pixels.push_back(newpix);
 	};
 
-	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
+	for (y=0; y<small.h; ++y) for (x=0; x<small.w; ++x)
 	{
 		std::vector<HSVA> nrm, trn, cli, dth;
-		for(int xx=0; xx<2; ++xx)
+		for (int xx=0; xx<2; ++xx)
 		{
 			int x2 = x*2+xx;
 			int y2 = y;
 			int idx = y2*w+x2;
-			switch(pixeltypes[idx])
+			switch (pixeltypes[idx])
 			{
 				case normal:  nrm.push_back(pixels[idx]);
 				case alpha:   dth.push_back(pixels[idx]);
@@ -945,21 +954,19 @@ void Anim::CIS::Scale50w()
 			}
 		}
 
-
-		for( int n = 2; n>0; --n )
+		for (int n = 2; n>0; --n)
 		{
-			if( (int)nrm.size() == n ) { mkpix( normal, nrm ); break; }
-			if( (int)trn.size() == n ) { mkpix( trans,  trn ); break; }
-			if( (int)cli.size() == n ) { mkpix( colimp, cli ); break; }
-			if( (int)dth.size() == n ) { mkpix( alpha,  dth ); break; }
+			if (ssize(nrm) == n) { mkpix(normal, nrm); break; }
+			if (ssize(trn) == n) { mkpix(trans,  trn); break; }
+			if (ssize(cli) == n) { mkpix(colimp, cli); break; }
+			if (ssize(dth) == n) { mkpix(alpha,  dth); break; }
 		}
 	}
 
 	small.hx = hx/2;
 	small.hy = hy;
 
-	(*this)=small;
-
+	(*this) = small;
 }
 
 void Anim::CIS::Scale50h()
@@ -980,14 +987,14 @@ void Anim::CIS::Scale50h()
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
+	auto mkpix = [&](PixelType pt, const std::vector<HSVA>& pix) -> void
 	{
-		if(pt==alpha)  small.has_dither =true;
-		if(pt==trans)  small.has_trans  =true;
-		if(pt==colimp) small.has_colimp =true;
+		if (pt==alpha)  small.has_dither =true;
+		if (pt==trans)  small.has_trans  =true;
+		if (pt==colimp) small.has_colimp =true;
 
 		int h=0,s=0,v=0;
-		for( const HSVA& hsv : pix )
+		for (const HSVA& hsv : pix)
 		{
 			h += hsv.h;
 			s += hsv.s;
@@ -999,29 +1006,29 @@ void Anim::CIS::Scale50h()
 		small.pixels.push_back(newpix);
 	};
 
-	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
+	for (y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
 	{
 		std::vector<HSVA> nrm, trn, cli, dth;
-		for( int yy=0; yy<2; ++yy )
+		for (int yy=0; yy<2; ++yy)
 		{
 			int x2 = x;
 			int y2 = y*2+yy;
 			int idx = y2*w+x2;
-			switch(pixeltypes[idx])
+			switch (pixeltypes[idx])
 			{
-				case normal:  nrm.push_back(pixels[idx]);
-				case alpha:   dth.push_back(pixels[idx]);
-				case trans:   trn.push_back(pixels[idx]);
-				case colimp:  cli.push_back(pixels[idx]);
+				case normal: nrm.push_back(pixels[idx]);
+				case alpha:  dth.push_back(pixels[idx]);
+				case trans:  trn.push_back(pixels[idx]);
+				case colimp: cli.push_back(pixels[idx]);
 			}
 		}
 
-		for( int n = 2; n>0; --n )
+		for (int n = 2; n>0; --n)
 		{
-			if( (int)nrm.size() == n ) { mkpix( normal, nrm ); break; }
-			if( (int)trn.size() == n ) { mkpix( trans,  trn ); break; }
-			if( (int)cli.size() == n ) { mkpix( colimp, cli ); break; }
-			if( (int)dth.size() == n ) { mkpix( alpha,  dth ); break; }
+			if (ssize(nrm) == n) { mkpix(normal, nrm); break; }
+			if (ssize(trn) == n) { mkpix(trans,  trn); break; }
+			if (ssize(cli) == n) { mkpix(colimp, cli); break; }
+			if (ssize(dth) == n) { mkpix(alpha,  dth); break; }
 		}
 	}
 
@@ -1029,7 +1036,6 @@ void Anim::CIS::Scale50h()
 	small.hy = hy/2;
 
 	(*this) = small;
-
 }
 
 Anim::CIS Anim::CIS::HalfSize()
@@ -1044,20 +1050,20 @@ Anim::CIS Anim::CIS::HalfSize()
 	small.pixels.clear();
 	small.pixels.reserve(n);
 
-	small.has_colimp =false;
-	small.has_dither =false;
-	small.has_trans  =false;
+	small.has_colimp = false;
+	small.has_dither = false;
+	small.has_trans  = false;
 
 	int x,y;
 
-	auto mkpix = [&]( PixelType pt, const std::vector<HSVA>& pix ) -> void
+	auto mkpix = [&](PixelType pt, const std::vector<HSVA>& pix) -> void
 	{
-		if(pt==alpha)  small.has_dither =true;
-		if(pt==trans)  small.has_trans  =true;
-		if(pt==colimp) small.has_colimp =true;
+		if (pt==alpha)  small.has_dither = true;
+		if (pt==trans)  small.has_trans  = true;
+		if (pt==colimp) small.has_colimp = true;
 
 		int h=0,s=0,v=0;
-		for( const HSVA& hsv : pix )
+		for (const HSVA& hsv : pix)
 		{
 			h += hsv.h;
 			s += hsv.s;
@@ -1069,10 +1075,10 @@ Anim::CIS Anim::CIS::HalfSize()
 		small.pixels.push_back(newpix);
 	};
 
-	for(y=0; y<small.h; ++y) for(x=0; x<small.w; ++x)
+	for (y=0; y<small.h; ++y) for (x=0; x<small.w; ++x)
 	{
 		std::vector<HSVA> nrm, trn, cli, dth;
-		for( int yy=0; yy<2; ++yy ) for(int xx=0; xx<2; ++xx)
+		for (int yy=0; yy<2; ++yy) for (int xx=0; xx<2; ++xx)
 		{
 			int x2 = x*2+xx;
 			int y2 = y*2+yy;
@@ -1086,13 +1092,12 @@ Anim::CIS Anim::CIS::HalfSize()
 			}
 		}
 
-
-		for( int n = 4; n>0; --n )
+		for (int n = 4; n>0; --n)
 		{
-			if( (int)nrm.size() == n ) { mkpix( normal, nrm ); break; }
-			if( (int)trn.size() == n ) { mkpix( trans,  trn ); break; }
-			if( (int)cli.size() == n ) { mkpix( colimp, cli ); break; }
-			if( (int)dth.size() == n ) { mkpix( alpha,  dth ); break; }
+			if (ssize(nrm) == n) { mkpix(normal, nrm); break; }
+			if (ssize(trn) == n) { mkpix(trans,  trn); break; }
+			if (ssize(cli) == n) { mkpix(colimp, cli); break; }
+			if (ssize(dth) == n) { mkpix(alpha,  dth); break; }
 		}
 	}
 
@@ -1102,89 +1107,88 @@ Anim::CIS Anim::CIS::HalfSize()
 	return small;
 }
 
-Anim::CIS Anim::CIS::CutOut( int x1,int y1,int ww,int hh)
+Anim::CIS Anim::CIS::CutOut(int x1,int y1,int ww,int hh)
 {
-	assert( (x1>=0) && (y1>=0) );
-	assert( (x1+ww) <= w );
-	assert( (y1+hh) <= h );
+	assert((x1>=0) && (y1>=0));
+	assert((x1+ww) <= w);
+	assert((y1+hh) <= h);
 	CIS c2;
 	c2.w = ww;
 	c2.h = hh;
-	c2.hx=c2.hy=0;
-	c2.has_colimp=c2.has_dither=c2.has_trans=false;
+	c2.hx = c2.hy = 0;
+	c2.has_colimp = c2.has_dither = c2.has_trans = false;
 	int x,y, sz = ww*hh;
 	c2.pixels.clear(); c2.pixels.reserve(sz);
 	c2.pixeltypes.clear(); c2.pixeltypes.reserve(sz);
-	for(y=0;y<hh;++y) for(x=0;x<ww;++x)
+	for (y=0; y<hh; ++y) for (x=0; x<ww; ++x)
 	{
 		int idx1 = x1+x + (y1+y)*w;
 		PixelType pt = pixeltypes[idx1];
-		if(pt==alpha)  c2.has_dither =true;
-		if(pt==colimp) c2.has_colimp =true;
-		if(pt==trans)  c2.has_trans  =true;
+		if (pt==alpha)  c2.has_dither = true;
+		if (pt==colimp) c2.has_colimp = true;
+		if (pt==trans)  c2.has_trans  = true;
 		c2.pixeltypes.push_back(pt);
 		c2.pixels.push_back(pixels[idx1]);
 	}
 	return c2;
 }
 
-
 void Anim::CIS::Crop()
 {
 	int W = w;
 	auto xy = [&W](int x,int y) -> int { return y*W + x; } ;
 	int topcrop = 0;
-	while(topcrop<h)
+	while (topcrop<h)
 	{
 		bool empty=true;
-		for(int x=0;empty&&(x<w);++x)
-			if( pixeltypes[xy(x,topcrop)] != trans )
-				empty=false;
-		if(empty) ++topcrop; else break;
+		for (int x=0; empty&&(x<w); ++x)
+			if (pixeltypes[xy(x,topcrop)] != trans)
+				empty = false;
+		if (empty) ++topcrop; else break;
 	}
-	if(topcrop==h) { w=h=0; pixeltypes.clear(); pixels.clear(); return; }
+	if (topcrop==h) { w=h=0; pixeltypes.clear(); pixels.clear(); return; }
 	int botcrop = 0;
-	while(true)
+	while (true)
 	{
 		bool empty=true;
-		for(int x=0;empty&&(x<w);++x)
-			if( pixeltypes[xy(x,h-botcrop-1)] != trans )
+		for (int x=0;empty&&(x<w);++x)
+			if (pixeltypes[xy(x,h-botcrop-1)] != trans)
 				empty=false;
 		if(empty) ++botcrop; else break;
 	}
 	int lftcrop = 0;
-	while(true)
+	while (true)
 	{
 		bool empty=true;
-		for(int y=0;empty&&(y<h);++y)
-			if( pixeltypes[xy(lftcrop,y)] != trans )
+		for (int y=0;empty&&(y<h);++y)
+			if (pixeltypes[xy(lftcrop,y)] != trans)
 				empty=false;
-		if(empty) ++lftcrop; else break;
+		if (empty) ++lftcrop; else break;
 	}
 	int rghcrop = 0;
-	while(true)
+	while (true)
 	{
 		bool empty=true;
-		for(int y=0;empty&&(y<h);++y)
-			if( pixeltypes[xy(w-rghcrop-1,y)] != trans )
+		for (int y=0;empty&&(y<h);++y)
+			if (pixeltypes[xy(w-rghcrop-1,y)] != trans)
 				empty=false;
-		if(empty) ++rghcrop; else break;
+		if (empty) ++rghcrop; else break;
 	}
 	int new_w = w - lftcrop - rghcrop;
 	int new_h = h - topcrop - botcrop;
-	assert( (new_w>0) && (new_w<=w) && (new_h>0) && (new_h<=h) );
+	assert((new_w>0) && (new_w<=w) && (new_h>0) && (new_h<=h));
 	std::vector<PixelType> new_pt; new_pt.reserve(new_w*new_h);
 	std::vector<HSVA>      new_px; new_px.reserve(new_w*new_h);
-	for(int y=0;y<new_h;++y) for(int x=0;x<new_w;++x)
+	for (int y=0; y<new_h; ++y) for (int x=0; x<new_w; ++x)
 	{
-		int idx = xy( x+lftcrop, y+topcrop );
-		new_pt.push_back( pixeltypes [idx] );
-		new_px.push_back( pixels     [idx] );
+		int idx = xy(x+lftcrop, y+topcrop);
+		new_pt.push_back(pixeltypes [idx]);
+		new_px.push_back(pixels     [idx]);
 	}
-	pixeltypes. clear(); pixeltypes. assign( new_pt.begin(), new_pt.end() );
-	pixels.     clear(); pixels.     assign( new_px.begin(), new_px.end() );
-	w=new_w; h=new_h;
-	hx-=lftcrop; hy-=topcrop;
+	pixeltypes. clear(); pixeltypes. assign(new_pt.begin(), new_pt.end());
+	pixels.     clear(); pixels.     assign(new_px.begin(), new_px.end());
+	w = new_w; h = new_h;
+	hx -= lftcrop; hy -= topcrop;
 }
 
 //void Anim::CIS::FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask )
@@ -1351,12 +1355,13 @@ void Anim::CIS::Crop()
 //	return MakeSurface();
 //}
 //
+
 void Anim::CIS::Unimport()
 {
 	int i,sz = w*h;
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
-		if( pixeltypes[i] == colimp )
+		if (pixeltypes[i] == colimp)
 		{
 			pixeltypes[i] = normal;
 		}
@@ -1366,9 +1371,9 @@ void Anim::CIS::Unimport()
 void Anim::CIS::MakeDark()
 {
 	int i,sz = w*h;
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
-		if( pixeltypes[i] == colimp )
+		if (pixeltypes[i] == colimp)
 		{
 			int diff = pixels[i].v;
 			diff /= 2;
@@ -1383,9 +1388,9 @@ void Anim::CIS::MakeDark()
 void Anim::CIS::MakeWhite()
 {
 	int i,sz = w*h;
-	for(i=0;i<sz;++i)
+	for (i=0; i<sz; ++i)
 	{
-		if( pixeltypes[i] == colimp )
+		if (pixeltypes[i] == colimp)
 		{
 			int diff = 255 - pixels[i].v;
 			diff /= 2;
@@ -1397,14 +1402,14 @@ void Anim::CIS::MakeWhite()
 	}
 }
 
-Anim::CIS Anim::CIS::Flip(bool fx,bool fy,bool rot)
+Anim::CIS Anim::CIS::Flip(bool fx, bool fy, bool rot)
 {
 	CIS cis;
 
 	auto& pt = cis.pixeltypes;
 	auto& px = cis.pixels;
 
-	if(rot)
+	if (rot)
 	{
 		cis.w =h;   cis.h =w;
 		cis.hx=hy;  cis.hy=hx;
@@ -1422,9 +1427,9 @@ Anim::CIS Anim::CIS::Flip(bool fx,bool fy,bool rot)
 	pt.clear(); pt.reserve(n);
 	px.clear(); px.reserve(n);
 
-	for(i=0;i<n;++i)
+	for (i=0; i<n; ++i)
 	{
-		if(rot)
+		if (rot)
 		{
 			x = fx ? h-(i%h)-1 : (i%h);
 			y = fy ? w-(i/h)-1 : (i/h);
@@ -1432,8 +1437,8 @@ Anim::CIS Anim::CIS::Flip(bool fx,bool fy,bool rot)
 			x = fx ? w-(i%w)-1 : (i%w);
 			y = fy ? h-(i/w)-1 : (i/w);
 		}
-		pt.push_back( pixeltypes [ x + y*w ] );
-		px.push_back( pixels     [ x + y*w ] );
+		pt.push_back(pixeltypes [x + y*w]);
+		px.push_back(pixels     [x + y*w]);
 	}
 	return cis;
 }
@@ -1441,25 +1446,25 @@ Anim::CIS Anim::CIS::Flip(bool fx,bool fy,bool rot)
 Anim::Surface& Anim::CIS::Get(UC hue)
 {
 	std::map<UC,Surface>::iterator iter;
-	if(!has_colimp)
+	if (!has_colimp)
 		iter = instance.begin();
 	else
 		iter = instance.find(hue);
-	assert( iter != instance.end() );
-	return iter->second ;
+	assert(iter != instance.end());
+	return iter->second;
 }
 
 void Anim::CIS::Instance(UC hue)
 {
-	if(!has_colimp)
+	if (!has_colimp)
 	{
-		if(instance.empty())
+		if (instance.empty())
 		{
 			instance[hue].FromCIS(*this);
 		}
 	} else {
-		if( instance.find(hue) == instance.end() )
-			instance[hue].FromCIS(*this,hue);
+		if (instance.find(hue) == instance.end())
+			instance[hue].FromCIS(*this, hue);
 	}
 }
 
@@ -1471,7 +1476,7 @@ void Anim::CIS::FreeData()
 
 void Anim::CIS::UnInstance()
 {
-	for( auto itr : instance )
+	for (auto itr : instance)
 		itr.second.Free();
 	instance.clear();
 }
@@ -1482,12 +1487,12 @@ void Anim::CIS::UnInstance()
 
 bool Anim::AnimReflection::Next()
 {
-	if(!ba) return false;
+	if (!ba) return false;
 	time = 0;
-	if( ++current > ba->Size() )
+	if (++current > ba->Size())
 	{
 		current = 0;
-		if(!ba->repeating) return false;
+		if (!ba->repeating) return false;
 	}
 	return true;
 }
@@ -1507,18 +1512,18 @@ bool Anim::AnimReflection::Update()
 
 bool Anim::AnimReflection::Update(int ms)
 {
-	if( (!ba) || (!ba->delay) ) return false;
+	if ((!ba) || (!ba->delay)) return false;
 	time += ms;
-	while( time >= ba->delay )
+	while (time >= ba->delay)
 	{
 		++current;
 		time -= ba->delay;
 	}
-	if( current >= ba->Size() )
+	if (current >= ba->Size())
 	{
 		loopcnt += (current / ba->Size());
 		current = current % ba->Size();
-		if(!ba->repeating) return false;
+		if (!ba->repeating) return false;
 	}
 	return true;
 }
@@ -1531,17 +1536,17 @@ bool Anim::AnimReflection::Update(int ms)
 		cis->Get(hue).Overlay(dst,x,y);
 }*/
 
-void Anim::AnimReflection::Set(BasicAnim* b,UC h)
+void Anim::AnimReflection::Set(BasicAnim* b, UC h)
 {
 	clr(); ba=b; hue=h;
 }
-void Anim::AnimReflection::Set(CIS* c,UC h)
+void Anim::AnimReflection::Set(CIS* c, UC h)
 {
 	clr(); cis=c; hue=h;
 }
 Anim::AnimReflection::AnimReflection() { clr(); }
-Anim::AnimReflection::AnimReflection(BasicAnim* b,UC h) { clr(); Set(b,h); }
-Anim::AnimReflection::AnimReflection(CIS* c,UC h) { clr(); Set(c,h); }
+Anim::AnimReflection::AnimReflection(BasicAnim* b, UC h) { clr(); Set(b,h); }
+Anim::AnimReflection::AnimReflection(CIS* c, UC h) { clr(); Set(c,h); }
 
 void Anim::AnimReflection::clr()
 {
@@ -1557,14 +1562,14 @@ void Anim::AnimReflection::clr()
 bool Anim::BasicAnim::LoadExt(std::string fn)
 {
 	std::string ext = ExtractFileExt(fn);
-	if(ext=="ba")
+	if (ext=="ba")
 	{
 		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
 		CIS cis;
-		if( cis.LoadExt(fn) )
+		if (cis.LoadExt(fn))
 		{
 			anim.clear();
 			anim.push_back(cis);
@@ -1576,7 +1581,7 @@ bool Anim::BasicAnim::LoadExt(std::string fn)
 
 Anim::AnimReflection Anim::BasicAnim::Refl(UC hue)
 {
-	AnimReflection ar(this,hue);
+	AnimReflection ar(this, hue);
 	return ar;
 }
 
@@ -1587,100 +1592,100 @@ Anim::Surface& Anim::BasicAnim::Get( int f, UC hue )
 
 void Anim::BasicAnim::Instance(UC hue)
 {
-	for(CIS& cis : anim)
+	for (CIS& cis : anim)
 		cis.Instance(hue);
 }
 
 void Anim::BasicAnim::UnInstance()
 {
-	for(CIS& cis : anim)
+	for (CIS& cis : anim)
 		cis.UnInstance();
 }
 
 void Anim::BasicAnim::FreeData()
 {
-	for(CIS& cis : anim)
+	for (CIS& cis : anim)
 		cis.FreeData();
 }
 
 void Anim::BasicAnim::SaveInternal(std::ostream& os)
 {
 	std::int16_t val = anim.size();
-	WriteBinary( os, val );
-	for(int i=0;i<val;++i)
+	WriteBinary(os, val);
+	for (int i=0; i<val; ++i)
 		anim[i].Save(os);
 }
-void Anim::BasicAnim::LoadInternal(std::istream& is,bool old)
+void Anim::BasicAnim::LoadInternal(std::istream& is, bool old)
 {
 	std::int16_t val;
-	ReadBinary( is, val );
+	ReadBinary(is, val);
 	anim.clear();
-	for(int i=0;i<val;++i)
+	for (int i=0; i<val; ++i)
 	{
 		anim.emplace_back();
 		CIS& cis = anim.back();
-		if(old)
+		if (old)
 			cis.LoadOld(is);
 		else
 			cis.Load(is);
 	}
 }
 
-void Anim::BasicAnim::LoadOld( std::istream& is )
+void Anim::BasicAnim::LoadOld(std::istream& is)
 {
-	ReadBinary( is, delay );
+	ReadBinary(is, delay);
 	std::int16_t val;
-	ReadBinary( is, val );
+	ReadBinary(is, val);
 	repeating = (bool) val;
-	jbf=0;
+	jbf = 0;
 	LoadInternal(is,true);
 }
 
-void Anim::BasicAnim::SaveOld( std::ostream& os )
+void Anim::BasicAnim::SaveOld(std::ostream& os)
 {
-	WriteBinary( os, delay );
+	WriteBinary(os, delay);
 	std::int16_t val = (short)repeating;
-	WriteBinary( os, val );
+	WriteBinary(os, val);
 	SaveInternal(os);
 }
 
-void Anim::BasicAnim::Load( std::istream& is )
+void Anim::BasicAnim::Load(std::istream& is)
 {
 	char buff[5] = {};
-	is.read(buff,4);
-	if( std::string(buff) != "BA_2" )
+	is.read(buff, 4);
+	if (std::string(buff) != "BA_2")
 	{
 		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
 		LoadOld(is);
 	} else {
-		ReadBinary( is, delay );
+		ReadBinary(is, delay);
 		std::int16_t val;
-		ReadBinary( is, val );
+		ReadBinary(is, val);
 		repeating = (bool) (val>>15);
 		jbf = val & 0x7FFF;
 		LoadInternal(is);
 	}
 }
 
-void Anim::BasicAnim::Save( std::ostream& os )
+void Anim::BasicAnim::Save(std::ostream& os)
 {
 	os.write("BA_2",4);
-	WriteBinary( os, delay );
+	WriteBinary(os, delay);
 	std::int16_t val = (std::int16_t)repeating;
 	val = val << 15;
 	val = val | jbf;
-	WriteBinary( os, val );
+	WriteBinary(os, val);
 	SaveInternal(os);
 }
 
-void Anim::BasicAnim::MakeMirror( BasicAnim& ba, bool mx, bool my, bool rot)
+void Anim::BasicAnim::MakeMirror(BasicAnim& ba, bool mx, bool my, bool rot)
 {
 	delay = ba.delay;
 	repeating = ba.repeating;
 	anim.clear();
-	for( CIS& cis : ba.anim )
-		anim.push_back(cis.Flip(mx,my,rot));
+	for (CIS& cis : ba.anim)
+		anim.push_back(cis.Flip(mx, my, rot));
 }
 
 
@@ -1691,14 +1696,14 @@ void Anim::BasicAnim::MakeMirror( BasicAnim& ba, bool mx, bool my, bool rot)
 bool Anim::AnimDir::LoadExt(std::string fn)
 {
 	std::string ext = ExtractFileExt(fn);
-	if(ext=="ad")
+	if (ext=="ad")
 	{
 		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
 		BAD bd;
-		if( bd.LoadExt(fn) )
+		if (bd.LoadExt(fn))
 		{
 			bad.clear();
 			bd.dir=0; bd.mirror=false;
@@ -1712,19 +1717,19 @@ bool Anim::AnimDir::LoadExt(std::string fn)
 
 void Anim::AnimDir::Instance(UC hue)
 {
-	for(BAD& b : bad)
+	for (BAD& b : bad)
 		b.Instance(hue);
 }
 
 void Anim::AnimDir::UnInstance()
 {
-	for(BAD& b : bad)
+	for (BAD& b : bad)
 		b.UnInstance();
 }
 
 void Anim::AnimDir::FreeData()
 {
-	for(BAD& b : bad)
+	for (BAD& b : bad)
 		b.FreeData();
 }
 
@@ -1734,38 +1739,38 @@ void Anim::AnimDir::LoadInternal(std::istream& is,bool old)
 	ReadBinary(is,n);
 	bad.clear();
 	bad.reserve(n);
-	for(i=0;i<n;++i)
+	for (i=0; i<n; ++i)
 	{
 		bad.push_back(BAD());
 		BAD& b = bad.back();
-		ReadBinary(is,b.dir);
+		ReadBinary(is, b.dir);
 		UC uc;
-		ReadBinary(is,uc);
-		if(uc)
+		ReadBinary(is, uc);
+		if (uc)
 		{
 			b.mirror = true;
 			b.flipx = uc&2;
 			b.flipy = uc&4;
 			b.rot90 = uc&8;
-			ReadBinary(is,b.mirrorof);
+			ReadBinary(is, b.mirrorof);
 		} else {
-			if(old)
+			if (old)
 				b.LoadOld(is);
 			else
 				b.Load(is);
-			b.mirror=false;
+			b.mirror = false;
 		}
 	}
 	Mirror();
 }
 
-void Anim::AnimDir::LoadOld(std::istream& is) { LoadInternal(is,true); }
+void Anim::AnimDir::LoadOld(std::istream& is) { LoadInternal(is, true); }
 
 void Anim::AnimDir::Load(std::istream& is)
 {
 	char buff[5] = {};
 	is.read(buff,4);
-	if( std::string(buff) != "AD_2" )
+	if (std::string(buff) != "AD_2")
 	{
 		is.seekg(-4, std::ios_base::cur);
 		//is.putback(buff[3]).putback(buff[2]).putback(buff[1]).putback(buff[0]);
@@ -1778,22 +1783,22 @@ void Anim::AnimDir::Load(std::istream& is)
 void Anim::AnimDir::SaveInternal(std::ostream& os, bool)
 {
 	short i,n = bad.size();
-	WriteBinary(os,n);
-	for(i=0;i<n;++i)
+	WriteBinary(os, n);
+	for (i=0; i<n; ++i)
 	{
 		BAD& b = bad[i];
-		WriteBinary(os,b.dir);
-		if(!b.mirror)
+		WriteBinary(os, b.dir);
+		if (!b.mirror)
 		{
-			WriteBinary(os,(UC)0);
+			WriteBinary(os, (UC)0);
 			b.Save(os);
 		} else {
 			UC uc = 1;
-			if(b.flipx) uc|=2;
-			if(b.flipy) uc|=4;
-			if(b.rot90) uc|=8;
-			WriteBinary(os,uc);
-			WriteBinary(os,b.mirrorof);
+			if (b.flipx) uc|=2;
+			if (b.flipy) uc|=4;
+			if (b.rot90) uc|=8;
+			WriteBinary(os, uc);
+			WriteBinary(os, b.mirrorof);
 		}
 	}
 }
@@ -1808,9 +1813,9 @@ void Anim::AnimDir::Save(std::ostream& os)
 
 Anim::AnimDir::BAD* Anim::AnimDir::findexact(short d)
 {
-	for( BAD& bd : bad )
+	for (BAD& bd : bad)
 	{
-		if( bd.dir == d ) return &bd;
+		if (bd.dir == d) return &bd;
 	}
 	return 0;
 }
@@ -1832,7 +1837,7 @@ int Anim::AnimDir::UseAsFont( SDL_Surface* d, Pos p, UC hue, string s)
 }
 */
 
-Anim::AnimReflection Anim::AnimDir::Refl(short dir,UC hue)
+Anim::AnimReflection Anim::AnimDir::Refl(short dir, UC hue)
 {
 	return Closest(dir).Refl(hue);
 }
@@ -1852,9 +1857,9 @@ Anim::BasicAnim& Anim::AnimDir::Closest(short dir)
 
 void Anim::AnimDir::Mirror()
 {
-	for(BAD& a:bad)
-		if(a.mirror)
-			a.MakeMirror( Closest(a.mirrorof), a.flipx,a.flipy,a.rot90 );
+	for (BAD& a:bad)
+		if (a.mirror)
+			a.MakeMirror(Closest(a.mirrorof), a.flipx, a.flipy, a.rot90);
 }
 
 // ***********
@@ -1864,27 +1869,27 @@ void Anim::AnimDir::Mirror()
 std::string ExtractFileNameOnly(std::string fn)
 {
 	auto p1 = fn.find_last_of("/\\");
-	if(p1==std::string::npos) p1=0;
+	if (p1==std::string::npos) p1=0;
 	auto p2 = fn.find_last_of(".");
-	if( p2<p1 ) p2 = std::string::npos;
-	if(p2==std::string::npos)
+	if (p2<p1) p2 = std::string::npos;
+	if (p2==std::string::npos)
 		return fn.substr(p1+1);
 	else
-		return fn.substr(p1+1,p2-p1);
+		return fn.substr(p1+1, p2-p1);
 
 }
 
 bool Anim::NAV::LoadExt(std::string fn)
 {
 	std::string ext = ExtractFileExt(fn);
-	if(ext=="nav")
+	if (ext=="nav")
 	{
 		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
 	} else {
 		AnimDir ad;
-		if( ad.LoadExt(fn) )
+		if (ad.LoadExt(fn))
 		{
 			variants.clear();
 			variants.push_back(ad);
@@ -2054,6 +2059,7 @@ auto Anim::AnimCollection::Refl(std::string name, short dir, UC hue)
 		itr = mappings.find("idle");
 	if (itr==end)
 		itr = mappings.begin();
+	assert(itr!=end);
 	return itr->second->Refl(dir, hue);
 }
 
