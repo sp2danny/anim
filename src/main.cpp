@@ -11,8 +11,10 @@ int main()
 
 	Anim::AnimDir horse;
 	horse.LoadExt("walk.ad");
-	horse.Instance(15);
+	horse.Instance(35);
+	Anim::AnimReflection ar = horse.Refl(90,35);
 
+	int i=0;
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -22,8 +24,12 @@ int main()
 				window.close();
 		}
 
+		if ((++i%50)==0)
+			ar.Next();
 		window.clear();
-		window.draw(shape);
+		ar.Overlay(window, 100,100);
+
+		//window.draw(shape);
 		window.display();
 	}
 

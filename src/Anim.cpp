@@ -12,9 +12,9 @@ constexpr auto ssize(const C& c) -> int
 }
 
 template<typename T,typename U>
-T& BestFit (std::int16_t dir, U& vec)
+T& BestFit(std::int16_t dir, U& vec)
 {
-	auto dirdiff = [](std::int16_t d1,std::int16_t d2) -> short
+	auto dirdiff = [](std::int16_t d1, std::int16_t d2) -> short
 	{
 		std::int16_t df = abs(d1-d2);
 		while (df>360) df -= 360;
@@ -116,22 +116,33 @@ void Anim::Surface::Overlay( Surface& dst, int x,int y ) const
 }
 */
 
-void Anim::Surface::Create(int w,int h)
+void Anim::Surface::Create(int ww, int hh)
 {
-	//surface = MakeSurface(w,h,SDL_GetVideoSurface()->format );
+	texture.create(ww, hh);
+	w = ww;
+	h = hh;
 	hx = hy = 0;
 }
 
 void Anim::Surface::FromCIS(CIS& cis)
 {
-	//surface = cis.MakeSurface();
-	hx = cis.hx; hy=cis.hy;
+	w = cis.Width(); h = cis.Height();
+	texture = cis.MakeSurface();
+	hx = cis.Hot().x; hy = cis.Hot().y;
 }
 
 void Anim::Surface::FromCIS(CIS& cis, UC hue)
 {
-	//surface = cis.MakeSurface(hue);
-	hx = cis.hx; hy=cis.hy;
+	w = cis.Width(); h = cis.Height();
+	texture = cis.MakeSurface(hue);
+	hx = cis.Hot().x; hy = cis.Hot().y;
+}
+
+void Anim::Surface::FromCIS(CIS& cis, UC alpha, UC hue)
+{
+	w = cis.Width(); h = cis.Height();
+	texture = cis.MakeSurface(alpha, hue);
+	hx = cis.Hot().x; hy = cis.Hot().y;
 }
 
 void Anim::Surface::FromBMP(char* bmp)
@@ -215,7 +226,7 @@ std::string ExtractFileExt(std::string fn)
 	auto p = fn.find_last_of('.');
 	if (p==std::string::npos) return "";
 	std::string ret = fn.substr(p+1);
-	for ( char& c : ret ) c=std::tolower(c);
+	for (char& c : ret) c = std::tolower(c);
 	return ret;
 }
 
@@ -235,8 +246,8 @@ bool Anim::CIS::LoadExt(std::string fn)
 	std::string ext = ExtractFileExt(fn);
 	if (ext=="cis")
 	{
-		std::ifstream ifs(fn,std::ios::in|std::ios::binary);
-		if(ifs.bad()) return false;
+		std::ifstream ifs(fn, std::ios::in|std::ios::binary);
+		if (ifs.bad()) return false;
 		Load(ifs);
 		return true;
 	}
@@ -267,7 +278,7 @@ void Anim::CIS::DummySave()
 	srf.Free();
 }*/
 
-void Anim::CIS::LoadInternal( std::istream& is )
+void Anim::CIS::LoadInternal(std::istream& is)
 {
 	has_dither = has_trans = has_colimp = false;
 
@@ -1242,119 +1253,134 @@ void Anim::CIS::Crop()
 //		}
 //	}
 //}
-//
-//SDL_Surface* Anim::CIS::MakeSurface()
-//{
-//	SDL_Surface* srf;
-//	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
-//	int mask = SDL_HWSURFACE;
-//	if( has_trans || has_dither )
-//		mask |= SDL_SRCCOLORKEY;
-//	srf = Anim::MakeSurface(w,h,pf,mask);
-//	//srf = SDL_CreateRGBSurface(mask,w,h,pf->BitsPerPixel,pf->Rmask,pf->Gmask,pf->Bmask,pf->Amask);
-//	assert(srf);
-//	SDL_LockSurface(srf);
-//	int x,y;
-//	pf = srf->format;
-//	int i=0;
-//
-//	for(y=0;y<h;++y)
-//	{
-//		unsigned char* ptr = (unsigned char*) srf->pixels;
-//		ptr += (srf->pitch) * y;
-//
-//		for(x=0;x<w;++x)
-//		{
-//			RGBA pp = HSVA_2_RGBA(pixels[i]);
-//			if(has_trans || has_dither)
-//			{
-//				if( pp.r==255 && pp.g==0 && pp.b==255 )
-//					pp.g = 1;
-//			}
-//			unsigned long pix;
-//			if(pixeltypes[i]==alpha)
-//				if( /*(((y-hy)%2)==1) &&*/ (((x+y-hx-hy)%2)!=0) )
-//					pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
-//				else
-//					pix = SDL_MapRGB(pf,255,0,255);
-//			else if(pixeltypes[i]==trans)
-//				pix = SDL_MapRGB(pf,255,0,255);
-//			else
-//				pix = SDL_MapRGB(pf,pp.r,pp.g,pp.b);
-//			for(int j=0;j<pf->BytesPerPixel;++j)
-//			{
-//				(*ptr) = (unsigned char)(pix&255);
-//				pix = pix >> 8;
-//				++ptr;
-//			}
-//			++i;
-//		}
-//	}
-//	SDL_UnlockSurface(srf);
-//
-//	if( has_trans || has_dither )
-//	{
-//		SDL_SetColorKey( srf,SDL_SRCCOLORKEY, SDL_MapRGB(pf,255,0,255) );
-//	}
-//	return srf;
-//}
-//
-//SDL_Surface* Anim::CIS::MakeSurface(unsigned char alpha,unsigned char hue)
-//{
-//	SDL_Surface* srf;
-//	SDL_PixelFormat* pf = SDL_GetVideoSurface()->format;
-//	int mask = SDL_HWSURFACE | SDL_SRCALPHA;
-//	srf = SDL_CreateRGBSurface(mask,w,h,32,0xFF0000ul,0xFF00ul,0xFFul,0xFF000000ul);
-//	assert(srf);
-//	SDL_LockSurface(srf);
-//	int x,y;
-//	pf = srf->format;
-//	int i=0;
-//
-//	for(y=0;y<h;++y)
-//	{
-//		unsigned char* ptr = (unsigned char*) srf->pixels;
-//		ptr += (srf->pitch) * y;
-//
-//		for(x=0;x<w;++x)
-//		{
-//			if(pixeltypes[i]==colimp)
-//				pixels[i].h = hue;
-//			RGBA pp = HSVA_2_RGBA(pixels[i]);
-//			unsigned long pix;
-//			if(pixeltypes[i]==alpha)
-//				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,alpha);
-//			else if(pixeltypes[i]==trans)
-//				pix = SDL_MapRGBA(pf,0,0,0,0);
-//			else
-//				pix = SDL_MapRGBA(pf,pp.r,pp.g,pp.b,255);
-//			for(int j=0;j<pf->BytesPerPixel;++j)
-//			{
-//				(*ptr) = (unsigned char)(pix&255);
-//				pix = pix >> 8;
-//				++ptr;
-//			}
-//			++i;
-//		}
-//	}
-//	SDL_UnlockSurface(srf);
-//
-//	return srf;
-//}
-//
-//SDL_Surface* Anim::CIS::MakeSurface(unsigned char hue)
-//{
-//	int i,sz = w*h;
-//	for(i=0;i<sz;++i)
-//	{
-//		if( pixeltypes[i] == colimp )
-//		{
-//			pixels[i].h = hue;
-//		}
-//	}
-//	return MakeSurface();
-//}
-//
+
+sf::Texture Anim::CIS::MakeSurface()
+{
+	std::vector<UC> data;
+	data.reserve(4*w*h);
+
+	int i=0;
+	for(int y=0; y<h; ++y)
+	{
+		for (int x=0; x<w; ++x)
+		{
+			RGBA pp = HSVA_2_RGBA(pixels[i]);
+
+			switch (pixeltypes[i])
+			{
+			case alpha:
+				if(((x+y-hx-hy)%2) == 0)
+					pp = {255,255,255,0};
+				break;
+			case trans:
+				pp = {255,255,255,0};
+				break;
+			default:
+				break;
+			}
+			data.push_back(pp.r);
+			data.push_back(pp.g);
+			data.push_back(pp.b);
+			data.push_back(pp.a);
+			++i;
+		}
+	}
+
+	sf::Image img;
+	img.create(w, h, data.data());
+	sf::Texture tx;
+	tx.loadFromImage(img);
+	return tx;
+}
+
+
+sf::Texture Anim::CIS::MakeSurface(UC hue)
+{
+	std::vector<UC> data;
+	data.reserve(4*w*h);
+
+	int i=0;
+	for(int y=0; y<h; ++y)
+	{
+		for (int x=0; x<w; ++x)
+		{
+			RGBA pp;
+
+			switch (pixeltypes[i])
+			{
+			case alpha:
+				if(((x+y-hx-hy)%2) == 0)
+					pp = {255,255,255,0};
+				break;
+			case trans:
+				pp = {255,255,255,0};
+				break;
+			case colimp:
+				pixels[i].h = hue;
+				pp = HSVA_2_RGBA(pixels[i]);
+				break;
+			default:
+				pp = HSVA_2_RGBA(pixels[i]);
+				break;
+			}
+			data.push_back(pp.r);
+			data.push_back(pp.g);
+			data.push_back(pp.b);
+			data.push_back(pp.a);
+			++i;
+		}
+	}
+
+	sf::Image img;
+	img.create(w, h, data.data());
+	sf::Texture tx;
+	tx.loadFromImage(img);
+	return tx;
+}
+
+sf::Texture Anim::CIS::MakeSurface(UC alp, UC hue) // blended
+{
+	std::vector<UC> data;
+	data.reserve(4*w*h);
+
+	int i=0;
+	for(int y=0; y<h; ++y)
+	{
+		for (int x=0; x<w; ++x)
+		{
+			RGBA pp;
+
+			switch (pixeltypes[i])
+			{
+			case alpha:
+				pixels[i].a = alp;
+				pp = HSVA_2_RGBA(pixels[i]);
+				break;
+			case trans:
+				pp = {255,255,255,0};
+				break;
+			case colimp:
+				pixels[i].h = hue;
+				pp = HSVA_2_RGBA(pixels[i]);
+				break;
+			default:
+				pp = HSVA_2_RGBA(pixels[i]);
+				break;
+			}
+			data.push_back(pp.r);
+			data.push_back(pp.g);
+			data.push_back(pp.b);
+			data.push_back(pp.a);
+			++i;
+		}
+	}
+
+	sf::Image img;
+	img.create(w, h, data.data());
+	sf::Texture tx;
+	tx.loadFromImage(img);
+	return tx;
+}
 
 void Anim::CIS::Unimport()
 {
@@ -1460,11 +1486,11 @@ void Anim::CIS::Instance(UC hue)
 	{
 		if (instance.empty())
 		{
-			instance[hue].FromCIS(*this);
+			instance[hue].FromCIS(*this, 127, hue);
 		}
 	} else {
 		if (instance.find(hue) == instance.end())
-			instance[hue].FromCIS(*this, hue);
+			instance[hue].FromCIS(*this, 127, hue);
 	}
 }
 
@@ -1489,7 +1515,7 @@ bool Anim::AnimReflection::Next()
 {
 	if (!ba) return false;
 	time = 0;
-	if (++current > ba->Size())
+	if (++current >= ba->Size())
 	{
 		current = 0;
 		if (!ba->repeating) return false;
@@ -1526,6 +1552,23 @@ bool Anim::AnimReflection::Update(int ms)
 		if (!ba->repeating) return false;
 	}
 	return true;
+}
+
+void Anim::AnimReflection::Overlay(sf::RenderTarget& rt, int x, int y)
+{
+	Surface* srf;
+	/**/ if (cis)
+		srf = &cis->Get(hue);
+	else if (ba)
+		srf = &ba->Get(current, hue);
+	else
+		return;
+
+	sf::Texture& tx = srf->SFML();
+	sf::Sprite sprite;
+	sprite.setTexture(tx);
+	sprite.setPosition(x, y);
+	rt.draw(sprite);
 }
 
 /*void Anim::AnimReflection::Overlay( SDL_Surface* dst, int x,int y )
@@ -1585,8 +1628,10 @@ Anim::AnimReflection Anim::BasicAnim::Refl(UC hue)
 	return ar;
 }
 
-Anim::Surface& Anim::BasicAnim::Get( int f, UC hue )
+Anim::Surface& Anim::BasicAnim::Get(int f, UC hue)
 {
+	assert (f>=0);
+	assert (f<(int)anim.size());
 	return anim[f].Get(hue);
 }
 

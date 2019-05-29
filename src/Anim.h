@@ -8,6 +8,8 @@
 #include <string>
 #include <cstdint>
 
+#include <SFML/Graphics.hpp>
+
 namespace Anim
 {
 	typedef unsigned char UC;
@@ -28,6 +30,7 @@ namespace Anim
 		void Overlay(Surface&, int,int) const;
 		void FromCIS(CIS&);
 		void FromCIS(CIS&, UC);
+		void FromCIS(CIS&, UC, UC);
 		void FromBMP(char*);
 		void FromBMP(char*, RGBA);
 		//void FromSFML( SDL_Surface* s, int hotx=0,int hoty=0) { surface=s; hx=hotx; hy=hoty; }
@@ -43,7 +46,7 @@ namespace Anim
 
 		void Create(int,int);
 
-		//SDL_Surface* SDL() const { return surface; }
+		sf::Texture& SFML() { return texture; }
 
 		Surface() = default;
 
@@ -53,8 +56,9 @@ namespace Anim
 
 	private:
 		//SDL_Surface* surface;
-		std::int16_t hx,hy;
+		std::int16_t hx,hy,w,h;
 		//bool owner;
+		sf::Texture texture;
 	};
 
 	/*
@@ -71,6 +75,8 @@ namespace Anim
 		bool Update(int);
 		void Start();
 		bool Update();
+		void Overlay(sf::RenderTarget& rt, int, int);
+		void Overlay(sf::RenderTarget& rt, Pos p) { Overlay(rt, p.x,p.y); }
 		//void Overlay( SDL_Surface*, int,int );
 		//void Overlay( SDL_Surface* s, Pos p ) { Overlay(s,p.x,p.y); }
 		void Set(BasicAnim*, UC);
@@ -120,6 +126,10 @@ namespace Anim
 
 		AnimReflection Refl(UC hue);
 
+		sf::Texture MakeSurface();
+		sf::Texture MakeSurface(UC hue); // dithered
+		sf::Texture MakeSurface(UC alp, UC hue); // blended
+
 		void Scale150w(), Scale150h();
 		void Scale150() { Scale150w(); Scale150h(); }
 		CIS HalfSize();
@@ -131,10 +141,6 @@ namespace Anim
 		void Scale50w(), Scale50h();
 		void Scale50() { HalfSizeMe(); }
 		void Unimport();
-
-		//SDL_Surface* MakeSurface();
-		//SDL_Surface* MakeSurface(UC hue); // dithered
-		//SDL_Surface* MakeSurface(UC alpha,UC hue); // blended
 
 		CIS Flip(bool, bool=false, bool=false);
 
