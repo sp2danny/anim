@@ -226,7 +226,7 @@ std::string ExtractFileExt(std::string fn)
 	auto p = fn.find_last_of('.');
 	if (p==std::string::npos) return "";
 	std::string ret = fn.substr(p+1);
-	for (char& c : ret) c = std::tolower(c);
+	for (char& c : ret) c = tolower(c);
 	return ret;
 }
 
@@ -571,12 +571,12 @@ Anim::HSVA Anim::RGBA_2_HSVA( const RGBA& rgb )
 
 	if(!hsv.v) return hsv;
 
-	hsv.s = 255 * delta / hsv.v;
-	if(!hsv.s) return hsv;
+	hsv.s = UC(255 * delta / hsv.v);
+	if (!hsv.s) return hsv;
 
-	/**/ if (rgb_max == rgb.r) { hsv.h =   0 + 43 * (rgb.g-rgb.b) / delta; }
-	else if (rgb_max == rgb.g) { hsv.h =  85 + 43 * (rgb.b-rgb.r) / delta; }
-	else if (rgb_max == rgb.b) { hsv.h = 171 + 43 * (rgb.r-rgb.g) / delta; }
+	/**/ if (rgb_max == rgb.r) { hsv.h = UC(  0 + 43 * (rgb.g-rgb.b) / delta); }
+	else if (rgb_max == rgb.g) { hsv.h = UC( 85 + 43 * (rgb.b-rgb.r) / delta); }
+	else if (rgb_max == rgb.b) { hsv.h = UC(171 + 43 * (rgb.r-rgb.g) / delta); }
 	else assert(false);
 
 	return hsv;
@@ -1567,7 +1567,7 @@ void Anim::AnimReflection::Overlay(sf::RenderTarget& rt, int x, int y)
 	sf::Texture& tx = srf->SFML();
 	sf::Sprite sprite;
 	sprite.setTexture(tx);
-	sprite.setPosition(x, y);
+	sprite.setPosition((float)x, (float)y);
 	rt.draw(sprite);
 }
 
@@ -1660,6 +1660,7 @@ void Anim::BasicAnim::SaveInternal(std::ostream& os)
 	for (int i=0; i<val; ++i)
 		anim[i].Save(os);
 }
+
 void Anim::BasicAnim::LoadInternal(std::istream& is, bool old)
 {
 	std::int16_t val;

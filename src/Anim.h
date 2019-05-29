@@ -19,27 +19,26 @@ namespace Anim
 	struct HSVA { UC h,s,v,a; };
 	struct RGBA { UC r,g,b,a; RGBA(); RGBA(UC,UC,UC); RGBA(UC,UC,UC,UC); };
 
-	RGBA HSVA_2_RGBA( const HSVA& );
-	HSVA RGBA_2_HSVA( const RGBA& );
+	RGBA HSVA_2_RGBA(const HSVA&);
+	HSVA RGBA_2_HSVA(const RGBA&);
 
 	struct CIS;
 
 	struct Surface 
 	{
-		//void Overlay( SDL_Surface*, int,int ) const;
-		void Overlay(Surface&, int,int) const;
+
 		void FromCIS(CIS&);
 		void FromCIS(CIS&, UC);
 		void FromCIS(CIS&, UC, UC);
 		void FromBMP(char*);
 		void FromBMP(char*, RGBA);
-		//void FromSFML( SDL_Surface* s, int hotx=0,int hoty=0) { surface=s; hx=hotx; hy=hoty; }
+
 		void Free();
 
 		static Surface Screen();
 
-		int Width()  const;
-		int Height() const;
+		int Width()  const { return w; }
+		int Height() const { return h; }
 
 		Pos Hot() const;
 		void Hot(const Pos&);
@@ -50,22 +49,10 @@ namespace Anim
 
 		Surface() = default;
 
-		//~Surface() { if(owner) Free(); }
-		//Surface(const Surface& s) { (*this)=s; }
-		//Surface& operator=(const Surface& s) { owner=false; surface=s.surface; hx=s.hx; hy=s.hy; }
-
 	private:
-		//SDL_Surface* surface;
 		std::int16_t hx,hy,w,h;
-		//bool owner;
 		sf::Texture texture;
 	};
-
-	/*
-	SDL_Surface* MakeTransMaskFromImage(SDL_Surface*);
-	SDL_Surface* MakeSurface(int,int,SDL_PixelFormat*,int);
-	SDL_Surface* MakeSurface(int,int,SDL_PixelFormat*);
-	*/
 
 	struct BasicAnim;
 
@@ -77,8 +64,6 @@ namespace Anim
 		bool Update();
 		void Overlay(sf::RenderTarget& rt, int, int);
 		void Overlay(sf::RenderTarget& rt, Pos p) { Overlay(rt, p.x,p.y); }
-		//void Overlay( SDL_Surface*, int,int );
-		//void Overlay( SDL_Surface* s, Pos p ) { Overlay(s,p.x,p.y); }
 		void Set(BasicAnim*, UC);
 		void Set(CIS*, UC);
 		void Set(AnimReflection& ar) { (*this)=ar; }

@@ -24,7 +24,7 @@ int main()
 				window.close();
 		}
 
-		if ((++i%50)==0)
+		if ((++i%250)==0)
 			ar.Next();
 		window.clear();
 		ar.Overlay(window, 100,100);
@@ -36,3 +36,6 @@ int main()
 	return 0;
 }
 
+#ifdef WINDOWS
+int __cdecl WinMain(void*, void*, char*, int) { return main(); }
+#endif
