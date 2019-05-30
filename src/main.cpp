@@ -9,14 +9,15 @@ int main()
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
 
+	Anim::Init();
 	Anim::AnimDir horse;
 	horse.LoadExt("walk.ad");
 	int c, a=90;
 	horse.Instance(c = 35);
 	Anim::AnimReflection ar = horse.Refl(a, c);
 	Anim::Pos pos = { 320, 240 };
+	ar.Start();
 
-	int i=0;
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -26,50 +27,37 @@ int main()
 				window.close();
 			if (event.type == sf::Event::KeyPressed)
 			{
+				if (event.key.code == sf::Keyboard::Escape)
+					window.close();
 				if (event.key.code == sf::Keyboard::Add)
 				{
 					c = (c + 8) % 255;
-					//horse.UnInstance();
 					horse.Instance(c);
-					auto curr = ar.Current();
-					ar = horse.Refl(a, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad6 )
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a=0, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=0, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad9)
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a=45, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=45, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad7)
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a=135, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=135, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad4)
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a = 180, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=180, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad1)
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a = 225, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=225, c));
 				}
 				if (event.key.code == sf::Keyboard::Numpad3)
 				{
-					auto curr = ar.Current();
-					ar = horse.Refl(a = -45, c);
-					ar.Current(curr);
+					ar.ContinueWith(horse.Refl(a=-45, c));
 				}
 			}
 			if (event.type == sf::Event::MouseButtonPressed)
@@ -79,9 +67,8 @@ int main()
 			}
 		}
 
-		if ((++i%250)==0)
-			ar.Next();
 		window.clear();
+		ar.Update();
 		ar.Overlay(window, pos);
 
 		//window.draw(shape);

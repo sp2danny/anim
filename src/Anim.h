@@ -12,6 +12,8 @@
 
 namespace Anim
 {
+	void Init();
+	
 	typedef unsigned char UC;
 
 	struct Pos { int x,y; Pos():x(0),y(0){} Pos(int x,int y):x(x),y(y){} };
@@ -43,14 +45,14 @@ namespace Anim
 		Pos Hot() const;
 		void Hot(const Pos&);
 
-		void Create(int,int);
+		void Create(int, int);
 
 		sf::Texture& SFML() { return texture; }
 
 		Surface() = default;
 
 	private:
-		std::int16_t hx,hy,w,h;
+		std::int16_t hx, hy, w, h;
 		sf::Texture texture;
 	};
 
@@ -63,23 +65,23 @@ namespace Anim
 		void Start();
 		bool Update();
 		void Overlay(sf::RenderTarget& rt, int, int);
-		void Overlay(sf::RenderTarget& rt, Pos p) { Overlay(rt, p.x,p.y); }
+		void Overlay(sf::RenderTarget& rt, Pos p) { Overlay(rt, p.x, p.y); }
 		void Set(BasicAnim*, UC);
 		void Set(CIS*, UC);
-		void Set(AnimReflection& ar) { (*this)=ar; }
-		void Set(AnimReflection&& ar) { (*this)=ar; }
+		void Set(const AnimReflection& ar) { (*this) = ar; }
+		void ContinueWith(const AnimReflection& ar);
 		AnimReflection();
 		AnimReflection(BasicAnim*, UC);
 		AnimReflection(CIS*, UC);
 		int Loopcnt() const { return loopcnt; }
 		int Current() const { return current; }
-		void Current(int curr) { current=curr; }
+		void Current(int curr) { current = curr; }
 	private:
 		void clr();
 		BasicAnim* ba;
 		CIS* cis;
 		std::int32_t current;
-		std::int32_t time,last;
+		std::int32_t time, last;
 		std::int32_t loopcnt;
 		UC hue;
 	};
@@ -89,8 +91,8 @@ namespace Anim
 		enum PixelType { normal=0, alpha, trans, colimp };
 
 	//private:
-		std::uint16_t w,h;
-		std::int16_t hx,hy;
+		std::uint16_t w, h;
+		std::int16_t hx, hy;
 		bool has_dither;
 		bool has_trans;
 		bool has_colimp;
@@ -101,7 +103,7 @@ namespace Anim
 
 	public:
 		void Load(std::istream&);
-		void Save(std::ostream& , int=0);
+		void Save(std::ostream&, int=0);
 		//void FromImg( SDL_Surface* image, SDL_Surface* transmask, SDL_Surface* dithermask, SDL_Surface* colimpmask );
 
 		void LoadOld(std::istream&);
@@ -149,8 +151,8 @@ namespace Anim
 		//void LoadPCX(const char* fn);
 
 	private:
-		void LoadInternal( std::istream& );
-		void SaveInternal( std::ostream& );
+		void LoadInternal(std::istream&);
+		void SaveInternal(std::ostream&);
 	friend
 		struct Surface;
 
@@ -166,7 +168,7 @@ namespace Anim
 		std::vector<CIS> anim;
 		void Load(std::istream&);
 		void Save(std::ostream&);
-		void MakeMirror(BasicAnim& , bool, bool, bool);
+		void MakeMirror(BasicAnim&, bool, bool, bool);
 
 		template<ClosureCIS exe> void DoAll() { for(CIS& cis:anim) (cis.*exe)(); }
 
@@ -193,8 +195,8 @@ namespace Anim
 	typedef struct AnimDir
 	{
 		struct BAD : BasicAnim {
-			std::int16_t dir,mirrorof;
-			bool mirror,flipx,flipy,rot90;
+			std::int16_t dir, mirrorof;
+			bool mirror, flipx, flipy, rot90;
 			BAD() : mirror(false) {}
 		};
 		std::vector<BAD> bad;

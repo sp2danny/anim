@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="anim" InternalType="Console">
+<CodeLite_Project Name="anim" InternalType="Console" Version="10.0.0">
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="src/main.cpp"/>
     <File Name="src/Anim.cpp"/>
     <File Name="src/Anim.h"/>
-    <File Name="src/Common.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

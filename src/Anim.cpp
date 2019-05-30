@@ -1511,6 +1511,15 @@ void Anim::CIS::UnInstance()
 // *** AnimReflection ***
 // **********************
 
+namespace Anim {
+	sf::Clock clock;
+}
+
+void Anim::Init()
+{
+	clock.restart();
+}
+
 bool Anim::AnimReflection::Next()
 {
 	if (!ba) return false;
@@ -1518,6 +1527,7 @@ bool Anim::AnimReflection::Next()
 	if (++current >= ba->Size())
 	{
 		current = 0;
+		++loopcnt;
 		if (!ba->repeating) return false;
 	}
 	return true;
@@ -1525,21 +1535,25 @@ bool Anim::AnimReflection::Next()
 
 void Anim::AnimReflection::Start()
 {
-	//last=SDL_GetTicks();
+	last = clock.getElapsedTime().asMilliseconds();
+	time = 0;
 }
 
 bool Anim::AnimReflection::Update()
 {
-	//int ii = SDL_GetTicks();
-	bool ok = true; //Update( last - ii );
-	//last = ii;
+	auto ii = clock.getElapsedTime().asMilliseconds();
+	bool ok = Update(ii - last);
+	last = ii;
 	return ok;
 }
 
 bool Anim::AnimReflection::Update(int ms)
 {
 	if ((!ba) || (!ba->delay)) return false;
+	if (ms<0) return false;
 	time += ms;
+	if (time < ba->delay)
+		return false;
 	while (time >= ba->delay)
 	{
 		++current;
@@ -1571,31 +1585,34 @@ void Anim::AnimReflection::Overlay(sf::RenderTarget& rt, int x, int y)
 	rt.draw(sprite);
 }
 
-/*void Anim::AnimReflection::Overlay( SDL_Surface* dst, int x,int y )
+void Anim::AnimReflection::ContinueWith(const AnimReflection& ar)
 {
-	if(ba)
-		ba->Get(current,hue).Overlay(dst,x,y);
-	else if(cis)
-		cis->Get(hue).Overlay(dst,x,y);
-}*/
+	cis = ar.cis;
+	ba = ar.ba;
+	hue = ar.hue;
+}
 
 void Anim::AnimReflection::Set(BasicAnim* b, UC h)
 {
 	clr(); ba=b; hue=h;
 }
+
 void Anim::AnimReflection::Set(CIS* c, UC h)
 {
 	clr(); cis=c; hue=h;
 }
+
 Anim::AnimReflection::AnimReflection() { clr(); }
-Anim::AnimReflection::AnimReflection(BasicAnim* b, UC h) { clr(); Set(b,h); }
-Anim::AnimReflection::AnimReflection(CIS* c, UC h) { clr(); Set(c,h); }
+Anim::AnimReflection::AnimReflection(BasicAnim* b, UC h) { Set(b, h); }
+Anim::AnimReflection::AnimReflection(CIS* c, UC h) { Set(c, h); }
 
 void Anim::AnimReflection::clr()
 {
-	cis=0; ba=0;
-	current=time=last=loopcnt=0;
-	hue=0;
+	cis = nullptr;
+	ba = nullptr;
+	last = clock.getElapsedTime().asMilliseconds();
+	current = time = loopcnt = 0;
+	hue = 0;
 }
 
 // *****************
