@@ -2,13 +2,14 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
+#include <TGUI/TGUI.hpp>
+
 #include "Anim.h"
 
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(640, 480), "SFML works!");
-	sf::CircleShape shape(100.f);
-	shape.setFillColor(sf::Color::Green);
+	tgui::Gui gui{ window };
 
 	Anim::Init();
 	Anim::AnimDir horse;
@@ -28,11 +29,40 @@ int main()
 	Anim::AnimReflection hm = horseman.Refl(names[i], a, c);
 	hm.Start();
 
+	auto nxtAction = [&]() {
+		i = (i + 1) % n;
+		window.setTitle(names[i]);
+		hm.Set(horseman.Refl(names[i], a, c));
+	};
+
+	tgui::Button::Ptr nxtBtn = tgui::Button::create();
+	nxtBtn->setSize(80, 30);
+	nxtBtn->setPosition(10, 10);
+	nxtBtn->setText("Next");
+	nxtBtn->connect("pressed", nxtAction);
+
+	auto prvAction = [&]() {
+		i = (i + n - 1) % n;
+		window.setTitle(names[i]);
+		hm.Set(horseman.Refl(names[i], a, c));
+	};
+
+	tgui::Button::Ptr prvBtn = tgui::Button::create();
+	prvBtn->setSize(80, 30);
+	prvBtn->setPosition(10, 50);
+	prvBtn->setText("Prev");
+	prvBtn->connect("pressed", prvAction);
+
+	gui.add(nxtBtn);
+	gui.add(prvBtn);
+
 	while (window.isOpen())
 	{
 		sf::Event event;
-		if (window.pollEvent(event))
+		while (window.pollEvent(event))
 		{
+			bool consumed = gui.handleEvent(event);
+			if (consumed) continue;
 			if (event.type == sf::Event::Closed)
 				window.close();
 			if (event.type == sf::Event::KeyPressed)
@@ -97,7 +127,7 @@ int main()
 		hm.Update();
 		hm.Overlay(window,320,480);
 
-		//window.draw(shape);
+		gui.draw();
 		window.display();
 	}
 

@@ -49,7 +49,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\SFML\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
       <PreprocessorDefinitions>SFML_STATIC;WINDOWS;_DEBUG</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -61,7 +61,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\SFML\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
       <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -80,6 +80,7 @@
     <ClInclude Include="src\Anim.h" />
   </ItemGroup>
   <ItemGroup>
+    <Library Include="..\..\SFML\lib\freetype.lib" />
     <Library Include="..\..\SFML\lib\sfml-graphics-s-d.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </Library>
@@ -96,6 +97,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </Library>
     <Library Include="..\..\SFML\lib\sfml-window-s.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="TGUI-0.8\lib\tgui-s-d.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="TGUI-0.8\lib\tgui-s.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Library>
   </ItemGroup>
