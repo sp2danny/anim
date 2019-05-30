@@ -271,6 +271,7 @@ namespace Anim
 		std::vector<std::string> AllNames();
 
 		AnimCollection() = default;
+		AnimCollection(std::string fn) : AnimCollection() { LoadExt(fn); }
 		AnimCollection(const AnimCollection&) = default;
 		AnimCollection(AnimCollection&&) = default;
 

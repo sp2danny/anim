@@ -1590,6 +1590,16 @@ void Anim::AnimReflection::ContinueWith(const AnimReflection& ar)
 	cis = ar.cis;
 	ba = ar.ba;
 	hue = ar.hue;
+	if (ba)
+	{
+		auto n = ba->Size();
+		if (n)
+			current = current % n;
+		else
+			current = 0;
+	} else {
+		current = 0;
+	}
 }
 
 void Anim::AnimReflection::Set(BasicAnim* b, UC h)
