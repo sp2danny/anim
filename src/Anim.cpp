@@ -1567,7 +1567,7 @@ void Anim::AnimReflection::Overlay(sf::RenderTarget& rt, int x, int y)
 	sf::Texture& tx = srf->SFML();
 	sf::Sprite sprite;
 	sprite.setTexture(tx);
-	sprite.setPosition((float)x, (float)y);
+	sprite.setPosition((float)(x-srf->Hot().x), (float)(y-srf->Hot().y));
 	rt.draw(sprite);
 }
 

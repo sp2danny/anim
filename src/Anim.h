@@ -72,6 +72,8 @@ namespace Anim
 		AnimReflection(BasicAnim*, UC);
 		AnimReflection(CIS*, UC);
 		int Loopcnt() const { return loopcnt; }
+		int Current() const { return current; }
+		void Current(int curr) { current=curr; }
 	private:
 		void clr();
 		BasicAnim* ba;
