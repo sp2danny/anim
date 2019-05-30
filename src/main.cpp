@@ -1,5 +1,6 @@
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 #include "Anim.h"
 
@@ -20,9 +21,9 @@ int main()
 	
 	Anim::AC horseman("horseman.ac");
 	
-	auto names = horseman.AllNames();
+	auto names = horseman.CoreNames();
 	unsigned int i=0, n=names.size();
-	
+
 	horseman.Instance(c);
 	Anim::AnimReflection hm = horseman.Refl(names[i], a, c);
 	hm.Start();
@@ -30,7 +31,7 @@ int main()
 	while (window.isOpen())
 	{
 		sf::Event event;
-		while (window.pollEvent(event))
+		if (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
@@ -40,7 +41,7 @@ int main()
 					window.close();
 				if (event.key.code == sf::Keyboard::Add)
 				{
-					c = (c + 8) % 255;
+					c = (c + 8) % 256;
 					horse.Instance(c);
 					ar.ContinueWith(horse.Refl(a, c));
 					horseman.Instance(c);
@@ -79,6 +80,7 @@ int main()
 				if (event.key.code == sf::Keyboard::N)
 				{
 					i = (i+1) % n;
+					window.setTitle(names[i]);
 					hm.Set(horseman.Refl(names[i], a, c));
 				}
 			}

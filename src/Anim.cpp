@@ -147,38 +147,38 @@ void Anim::Surface::FromCIS(CIS& cis, UC alpha, UC hue)
 
 void Anim::Surface::FromBMP(char* bmp)
 {
-	//surface = SDL_LoadBMP(bmp);
+	texture.loadFromFile(bmp);
+	w = texture.getSize().x;
+	h = texture.getSize().y;
 	hx = hy = 0;
 }
 
 void Anim::Surface::FromBMP(char* bmp, RGBA ck)
 {
-	//surface = SDL_LoadBMP(bmp);
+	sf::Image img;
+	img.loadFromFile(bmp);
+	sf::Color col;
+	col.r = ck.r;
+	col.g = ck.g;
+	col.b = ck.b;
+	img.createMaskFromColor(col);
+	texture.loadFromImage(img);
+	w = texture.getSize().x;
+	h = texture.getSize().y;
 	hx = hy = 0;
-	/*if (surface)
-	{
-		Uint32 colk = SDL_MapRGB(surface->format, ck.r, ck.g, ck.a);
-		SDL_SetColorKey(surface,SDL_SRCCOLORKEY,colk);
-	}*/
 }
 
 void Anim::Surface::Free()
 {
-	//if (surface)
-	//	SDL_FreeSurface(surface);
-	//surface = nullptr;
+	texture.swap(sf::Texture{});
 }
 
 Anim::Surface Anim::Surface::Screen()
 {
 	Surface s;
-	//s.surface = SDL_GetVideoSurface();
 	s.hx = s.hy = 0;
 	return s;
 }
-
-//int Anim::Surface::Width()  const { return surface->w; }
-//int Anim::Surface::Height() const { return surface->h; }
 
 template <typename T>
 inline void ReadBinary(std::istream& istr, T& val)
