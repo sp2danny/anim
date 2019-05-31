@@ -1949,7 +1949,6 @@ std::string ExtractFileNameOnly(std::string fn)
 		return fn.substr(p1+1);
 	else
 		return fn.substr(p1+1, p2-p1);
-
 }
 
 bool Anim::NAV::LoadExt(std::string fn)

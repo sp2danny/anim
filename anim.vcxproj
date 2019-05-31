@@ -77,10 +77,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Anim.cpp" />
+    <ClCompile Include="src\back.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Anim.h" />
+    <ClInclude Include="src\back.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\SFML\lib\freetype.lib" />
