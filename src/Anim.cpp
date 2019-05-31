@@ -170,7 +170,7 @@ void Anim::Surface::FromBMP(char* bmp, RGBA ck)
 
 void Anim::Surface::Free()
 {
-	texture.swap(sf::Texture{});
+	texture = sf::Texture{};
 }
 
 Anim::Surface Anim::Surface::Screen()
