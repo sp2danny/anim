@@ -33,7 +33,7 @@ void Main(const std::vector<std::string>& args)
 	Anim::AC item(args[0]);
 	
 	auto names = item.CoreNames();
-	unsigned int i=0, n=names.size();
+	unsigned int i=0;
 
 	item.Instance(c);
 	Anim::AnimReflection refl = item.Refl(names[i], a, c);
@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
 {
 	std::vector<std::string> args;
 	for (int i = 1; i < argc; ++i)
-		args.push_back(atgv[i]);
+		args.push_back(argv[i]);
 	Main(args);
 }
 #endif

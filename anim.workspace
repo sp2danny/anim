@@ -2,11 +2,11 @@
 <CodeLite_Workspace Name="anim" Database="/home/sp2danny/extra/.codelite/anim.tags" Version="10.0.0">
   <Project Name="anim" Path="anim.project" Active="Yes"/>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="yes">
+    <WorkspaceConfiguration Name="Debug" Selected="no">
       <Environment/>
       <Project Name="anim" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="no">
+    <WorkspaceConfiguration Name="Release" Selected="yes">
       <Environment/>
       <Project Name="anim" ConfigName="Release"/>
     </WorkspaceConfiguration>
