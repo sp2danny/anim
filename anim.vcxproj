@@ -49,10 +49,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
       <PreprocessorDefinitions>SFML_STATIC;WINDOWS;_DEBUG</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -61,11 +62,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
       <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>SFML_STATIC;WINDOWS;NDEBUG</PreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -76,15 +78,32 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\alib.cpp" />
+    <ClCompile Include="src\aLibFast.cpp" />
     <ClCompile Include="src\Anim.cpp" />
     <ClCompile Include="src\back.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\bitmap.cpp" />
+    <ClCompile Include="src\bitstream.cpp" />
+    <ClCompile Include="src\inireader.cpp" />
+    <ClCompile Include="src\lzma.cpp" />
+    <ClCompile Include="src\lzv.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\pcxLoad.cpp" />
+    <ClCompile Include="src\sbct.cpp" />
+    <ClCompile Include="src\tokenmap.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\alib.hpp" />
     <ClInclude Include="src\Anim.h" />
     <ClInclude Include="src\back.h" />
+    <ClInclude Include="src\bitmap.hpp" />
+    <ClInclude Include="src\bitstream.hpp" />
+    <ClInclude Include="src\core.hpp" />
+    <ClInclude Include="src\inireader.hpp" />
+    <ClInclude Include="src\lzv.hpp" />
+    <ClInclude Include="src\tokenmap.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\SFML\lib\freetype.lib" />
@@ -106,6 +125,7 @@
     <Library Include="..\..\SFML\lib\sfml-window-s.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Library>
+    <Library Include="src\lzma\lib\x64\liblzma.lib" />
     <Library Include="TGUI-0.8\lib\tgui-s-d.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </Library>
