@@ -8,10 +8,29 @@
     <File Name="src/Anim.h"/>
     <File Name="src/back.cpp"/>
     <File Name="src/back.h"/>
+    <VirtualDirectory Name="alib">
+      <File Name="src/alib.cpp"/>
+      <File Name="src/alib.hpp"/>
+      <File Name="src/aLibFast.cpp"/>
+      <File Name="src/bitmap.cpp"/>
+      <File Name="src/bitmap.hpp"/>
+      <File Name="src/bitstream.cpp"/>
+      <File Name="src/bitstream.hpp"/>
+      <File Name="src/core.hpp"/>
+      <File Name="src/inireader.cpp"/>
+      <File Name="src/inireader.hpp"/>
+      <File Name="src/lzma.cpp"/>
+      <File Name="src/lzv.cpp"/>
+      <File Name="src/lzv.hpp"/>
+      <File Name="src/pcxLoad.cpp"/>
+      <File Name="src/sbct.cpp"/>
+      <File Name="src/tokenmap.cpp"/>
+      <File Name="src/tokenmap.hpp"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
-      <Compiler Options="-std=c++17;-Wall;-Wextra;-Werror;-pedantic;-Wno-unused-parameter" C_Options="-Wall" Assembler="">
+      <Compiler Options="-std=c++17;-Wall;-Wextra;-Werror;-pedantic;-Wno-unused-parameter;-Wno-four-char-constants" C_Options="-Wall" Assembler="">
         <IncludePath Value="."/>
         <IncludePath Value="./src"/>
         <IncludePath Value="./TGUI-0.8.5/include"/>
@@ -23,6 +42,8 @@
         <Library Value="sfml-window"/>
         <Library Value="sfml-system"/>
         <Library Value="tgui"/>
+        <Library Value="lzma"/>
+        <Library Value="stdc++fs"/>
       </Linker>
       <ResourceCompiler Options=""/>
     </GlobalSettings>

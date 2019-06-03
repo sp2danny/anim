@@ -145,7 +145,7 @@ struct streamtarget : bittarget
 
 struct token_channel : bitsource, bittarget
 {
-private:
+//private:
 	virtual bool have(UC bitcount) override;
 	virtual UL get(UC bitcount) override;
 	virtual void put(UL bits, UC bitcount) override;
@@ -159,7 +159,7 @@ friend
 
 struct cyclic_token_channel //: bitsource, bittarget
 {
-private:
+//private:
 	cyclic_token_channel();
 	static const UL N = 16*1024;
 	static const UL mask = N-1;

@@ -6,11 +6,12 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <sstream>
 #include <map>
+#include <cstring>
 
-#pragma hdrstop
+// #pragma hdrstop
 
 #include "alib.hpp"
 
@@ -450,7 +451,7 @@ UL alib::AC::SaveFast(std::ostream& ofs) const
 	{
 		UL name_id = nb.Lookup(m.first);
 		NAV* n = m.second;
-		const AD& ad = m.second->Get(0);
+		const AD& ad = n->Get(0);
 		UL anim_id = fnd_ad(&ad);
 		auto p = std::make_pair(name_id, anim_id);
 		if (std::count(pairs.begin(), pairs.end(), p) == 0)
@@ -479,7 +480,7 @@ UL alib::AC::SaveFast(std::ostream& ofs) const
 	{
 		wr += ad->SaveFast(ofs);
 	}
-	auto fsz = ofs.tellp();
+	[[maybe_unused]] auto fsz = ofs.tellp();
 	ofs.seekp(4);
 	ffh.filesize = hdr_sz + nam_sz + pair_sz + wr;
 	assert(ffh.filesize == +fsz);

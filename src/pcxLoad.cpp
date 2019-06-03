@@ -147,7 +147,7 @@ void alib::CIS::LoadPCX(const char* fn)
 	if (hdr.verinf>=5)
 	{
 		palette.resize(256);
-		int c = getc(fp);
+		[[maybe_unused]] int c = getc(fp);
 		assert(c==0x0c);
 		for (int i=0; i<256; ++i)
 		{

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <streambuf>
 
-#pragma hdrstop
+// #pragma hdrstop
 
 #ifndef NO_SFML
 #include <SFML/Graphics.hpp>
@@ -783,7 +783,7 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	{
 		if (itm.havev)
 		{
-			bool ok = src.have(dep);
+			[[maybe_unused]] bool ok = src.have(dep);
 			assert (ok);
 			itm.vval = src.get(dep) << (8-dep);
 			pixels[ii].v = itm.vval;
@@ -836,7 +836,7 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 		auto itm = items_2[i];
 		if (itm.haveh)
 		{
-			bool ok = src.have(dep);
+			[[maybe_unused]] bool ok = src.have(dep);
 			assert (ok);
 			UC hval = src.get(dep) << (8-dep); ++nn;
 			items[idx(x2 + 0, y2 + 0)].hval = hval;
@@ -855,7 +855,7 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 		auto itm = items_2[i];
 		if (itm.haves)
 		{
-			bool ok = src.have(dep);
+			[[maybe_unused]] bool ok = src.have(dep);
 			assert (ok);
 			UC sval = src.get(dep) << (8 - dep); ++nn;
 			items[idx(x2 + 0, y2 + 0)].sval = sval;
@@ -920,7 +920,7 @@ auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 	}
 
 	img.create(w,h,(UC*)pix.data());
-	bool ok = res.first->second.loadFromImage(img);
+	[[maybe_unused]] bool ok = res.first->second.loadFromImage(img);
 	assert(ok);
 
 	instanciated = true;
@@ -1289,7 +1289,7 @@ bool alib::BasicAnim::LoadPacked(UC dep, decompress_bypass_source& src)
 	if (!src.have(10)) return false;
 	UL val = src.get(10);
 	anim.resize(val);
-	int ii = 1;
+	//int ii = 1;
 	for (CIS& cis : anim)
 	{
 		bool ok = cis.LoadPacked(dep, src);
@@ -1754,7 +1754,7 @@ std::string string_in_6(bitsource& src)
 
 void string_out_8(const std::string& str, bittarget& trg)
 {
-	auto len = str.length();
+	//auto len = str.length();
 	for (char c : str)
 	{
 		assert(c);
@@ -2024,7 +2024,7 @@ void alib::AnimCollection::Load(std::istream& is)
 		streamsource ss{is};
 		decompress_bypass_source dbs{6, ss};
 		LoadPacked(6,dbs);
-		auto dbg = dbs.mapx.size();
+		//auto dbg = dbs.mapx.size();
 		//std::cout << dbg << std::endl;
 	}
 	else if (magic == "ac_2")

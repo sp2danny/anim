@@ -3,11 +3,11 @@
 
 #include <vector>
 
-#pragma hdrstop
+//#pragma hdrstop
 
 #define LZMA_API_STATIC
 
-#include "lzma/include/lzma.h"
+#include <lzma.h>
 
 #include "core.hpp"
 

@@ -99,7 +99,7 @@ void alib::SaveBMP(const RGB_Image& img, std::ostream& out)
 	BITMAPINFOHEADER ih;
 
 	fh.bfSize = sizeof(fh) + sizeof(ih);
-	fh.bfType = 'MB';
+	fh.bfType = ('M' << 8) | 'B';
 	fh.bfReserved1 = fh.bfReserved2 = 0;
 	fh.bfOffBits = sizeof(fh) + sizeof(ih);
 

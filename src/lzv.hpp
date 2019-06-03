@@ -7,6 +7,7 @@
 #include "bitstream.hpp"
 
 #include <cassert>
+#include <chrono>
 
 static constexpr auto BIT = 6;
 

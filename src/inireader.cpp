@@ -9,7 +9,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#pragma hdrstop
+//#pragma hdrstop
 
 #include "inireader.hpp"
 

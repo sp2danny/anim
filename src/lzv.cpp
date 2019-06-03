@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <algorithm>
 
 static_assert(std::numeric_limits<UC>::digits == 8  , "UC not 8bit");
 static_assert(std::numeric_limits<UL>::digits == 32 , "UL not 32bit");
@@ -252,7 +253,7 @@ void compress_bypass_target::reset()
 	for (UC i = 0; i < next_token; ++i)
 	{
 		bv[0] = (UC)i;
-		bool ok = mapx.add(bv);
+		[[maybe_unused]] bool ok = mapx.add(bv);
 		assert(ok);
 	}
 	prev.clear();
@@ -444,7 +445,7 @@ void decompress_bypass_source::reset()
 	for (UC i = 0; i < next_token; ++i)
 	{
 		bv[0] = (UC)i;
-		bool ok = mapx.add(bv);
+		[[maybe_unused]] bool ok = mapx.add(bv);
 	}
 	bv.clear();
 	prev.clear();
@@ -481,7 +482,7 @@ bool decompress_bypass_source::getsome()
 	static int phase = 0;
 	static std::size_t codepoints, tokens, bits, leads;
 
-	auto phaseto = [&](int ph)
+	[[maybe_unused]] auto phaseto = [&](int ph)
 	{
 		if (phase == ph) return;
 		if (phase == 1)
