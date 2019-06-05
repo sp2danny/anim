@@ -62,7 +62,7 @@ sf::Clock& GlobalClock();
 struct CIS
 {
 	CIS();
-	void Load(const std::string&);
+	bool Load(const std::string&);
 	void Load(std::istream&);
 	void LoadOld(std::istream&);
 	bool LBS(UC dep, bitsource&);
@@ -128,7 +128,7 @@ private:
 
 struct BasicAnim
 {
-	void Load(const std::string&);
+	bool Load(const std::string&);
 	void Load(std::istream&);
 	void LoadOld(std::istream&);
 	bool LBS(UC dep, bitsource&);
@@ -181,7 +181,7 @@ friend
 
 struct AnimDir
 {
-	void Load(const std::string&);
+	bool Load(const std::string&);
 	void Load(std::istream&);
 	void LoadOld(std::istream&);
 	bool LBS(UC dep, bitsource&);
@@ -236,7 +236,7 @@ private:
 
 struct NAV
 {
-	void Load(const std::string&);
+	bool Load(const std::string&);
 	void Load(std::istream&);
 	void LoadOld(std::istream&);
 	bool LBS(UC dep, bitsource&);
@@ -270,7 +270,7 @@ struct AnimCollection
 {
 	void AddVariant(std::string, AnimDir);
 
-	void Load(const std::string&);
+	bool Load(const std::string&);
 	void Load(std::istream&);
 	void LoadOld(std::istream&);
 	bool LBS(UC dep, bitsource&);
@@ -320,7 +320,9 @@ struct AnimReflection : sf::Drawable, sf::Transformable
 
 	void Set(BasicAnim*, UC);
 	void Set(CIS*, UC);
-	void Set(AnimReflection& ar) { (*this) = ar; }
+	void Set(AnimReflection& ar);
+	void ContinueWith(const AnimReflection& ar);
+
 	AnimReflection();
 	AnimReflection(BasicAnim*, UC);
 	AnimReflection(CIS*, UC);

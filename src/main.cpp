@@ -20,8 +20,6 @@
 
 namespace fs = std::experimental::filesystem;
 
-extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
-
 void Main(const std::vector<std::string>& args)
 {
 	if (args.size() != 1)
@@ -30,7 +28,7 @@ void Main(const std::vector<std::string>& args)
 		return;
 	}
 
-	sf::RenderWindow window(sf::VideoMode(640, 480), "SFML works!");
+	sf::RenderWindow window(sf::VideoMode(640, 480), "aLib viewer");
 
 	tgui::Gui gui{window};
 
@@ -75,32 +73,16 @@ void Main(const std::vector<std::string>& args)
 
 	int c = 35, a = 0;
 
-	Anim::AC item(args[0]);
+	alib::AC item;
 
-	alib::AC item2;
-	{
-		auto          fn = "Battleship.fzac"s;
-		std::ifstream ifs{fn, std::fstream::binary};
-		UL            sz = (UL)fs::file_size(fn);
-		BVec          v1, v2;
-		v1.resize(sz);
-		ifs.read((char*)v1.data(), sz);
-		bool ok = LZMADecompress(v1, v2);
-		if (!ok)
-			throw "load error";
-		ok = item2.LoadFast(v2);
-		if (!ok)
-			throw "load error";
-	}
-	alib::Refl refl2 = item2.Refl("idle", 90, 55);
-	refl2.Start();
-	refl2.setPosition({150, 150});
+	item.Load(args[0]);
 
-	auto         names = item.CoreNames();
-	unsigned int i     = 0;
+	auto names = item.CoreNames();
+
+	unsigned int i = 0;
 
 	item.Instance(c);
-	Anim::AnimReflection refl = item.Refl(names[i], a, c);
+	alib::AnimReflection refl = item.Refl(names[i], a, c);
 	refl.Start();
 
 	auto btnAction = [&](int j) {
@@ -132,7 +114,8 @@ void Main(const std::vector<std::string>& args)
 	tx.loadFromImage(img);
 	sf::Sprite spr;
 	spr.setTexture(tx);
-	Anim::Pos pos{320, 240};
+	sf::Vector2f pos{320, 240};
+	refl.setPosition(pos);
 
 	while (window.isOpen())
 	{
@@ -189,20 +172,18 @@ void Main(const std::vector<std::string>& args)
 					refl.ContinueWith(item.Refl(names[i], a = -45, c));
 				}
 			}
-			if (event.type == sf::Event::MouseButtonPressed)
+			else if (event.type == sf::Event::MouseButtonPressed)
 			{
 				pos.x = event.mouseButton.x;
 				pos.y = event.mouseButton.y;
+				refl.setPosition(pos);
 			}
 		}
 
 		window.clear();
 		window.draw(spr);
 		refl.Update();
-		refl.Overlay(window, pos);
-
-		refl2.Update();
-		window.draw(refl2);
+		window.draw(refl);
 
 		gui.draw();
 		window.display();

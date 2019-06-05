@@ -6,8 +6,9 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <filesystem>
 
-// #pragma hdrstop
+namespace fs = std::filesystem;
 
 #ifndef NO_SFML
 #include <SFML/Graphics.hpp>
@@ -39,17 +40,41 @@ alib::RGBA alib::HSVA_2_RGBA(const HSVA& hsv)
 	rem = (hsv.h - (reg * 43)) * 6;
 
 	p = (hsv.v * (255 - hsv.s)) >> 8;
-	q = (hsv.v * (255 - ((hsv.s*rem) >> 8))) >> 8;
+	q = (hsv.v * (255 - ((hsv.s * rem) >> 8))) >> 8;
 	t = (hsv.v * (255 - ((hsv.s * (255 - rem)) >> 8))) >> 8;
 
 	switch (reg)
 	{
-		case 0:  rgb.r = hsv.v; rgb.g = t;     rgb.b = p;     break;
-		case 1:  rgb.r = q;     rgb.g = hsv.v; rgb.b = p;     break;
-		case 2:  rgb.r = p;     rgb.g = hsv.v; rgb.b = t;     break;
-		case 3:  rgb.r = p;     rgb.g = q;     rgb.b = hsv.v; break;
-		case 4:  rgb.r = t;     rgb.g = p;     rgb.b = hsv.v; break;
-		default: rgb.r = hsv.v; rgb.g = p;     rgb.b = q;     break;
+	case 0:
+		rgb.r = hsv.v;
+		rgb.g = t;
+		rgb.b = p;
+		break;
+	case 1:
+		rgb.r = q;
+		rgb.g = hsv.v;
+		rgb.b = p;
+		break;
+	case 2:
+		rgb.r = p;
+		rgb.g = hsv.v;
+		rgb.b = t;
+		break;
+	case 3:
+		rgb.r = p;
+		rgb.g = q;
+		rgb.b = hsv.v;
+		break;
+	case 4:
+		rgb.r = t;
+		rgb.g = p;
+		rgb.b = hsv.v;
+		break;
+	default:
+		rgb.r = hsv.v;
+		rgb.g = p;
+		rgb.b = q;
+		break;
 	}
 
 	return rgb;
@@ -57,17 +82,20 @@ alib::RGBA alib::HSVA_2_RGBA(const HSVA& hsv)
 
 namespace detail
 {
-	template<typename T, typename... Args>
-	void impl_minmax(std::pair<T, T>&) {}
+template<typename T, typename... Args>
+void impl_minmax(std::pair<T, T>&)
+{}
 
-	template<typename T, typename... Args>
-	void impl_minmax(std::pair<T, T>& result, const T& val, const Args&... args)
-	{
-		if (val < result.first)  result.first  = val;
-		if (val > result.second) result.second = val;
-		detail::impl_minmax(result, args...);
-	}
+template<typename T, typename... Args>
+void impl_minmax(std::pair<T, T>& result, const T& val, const Args&... args)
+{
+	if (val < result.first)
+		result.first = val;
+	if (val > result.second)
+		result.second = val;
+	detail::impl_minmax(result, args...);
 }
+}  // namespace detail
 
 template<typename T, typename... Args>
 std::pair<T, T> minmax(const T& val, const Args&... rest)
@@ -79,9 +107,9 @@ std::pair<T, T> minmax(const T& val, const Args&... rest)
 
 alib::HSVA alib::RGBA_2_HSVA(const RGBA& rgb)
 {
-	HSVA hsv = {0,0,0,rgb.a};
+	HSVA hsv = {0, 0, 0, rgb.a};
 
-	auto mm = minmax(rgb.r, rgb.g, rgb.b);
+	auto  mm      = minmax(rgb.r, rgb.g, rgb.b);
 	auto& rgb_min = mm.first;
 	auto& rgb_max = mm.second;
 
@@ -89,17 +117,50 @@ alib::HSVA alib::RGBA_2_HSVA(const RGBA& rgb)
 
 	hsv.v = rgb_max;
 
-	if (!hsv.v) return hsv;
+	if (!hsv.v)
+		return hsv;
 
 	hsv.s = UC(255 * delta / hsv.v);
-	if (!hsv.s) return hsv;
+	if (!hsv.s)
+		return hsv;
 
-	/**/ if (rgb_max == rgb.r) { hsv.h = UC(  0 + 43 * (rgb.g - rgb.b) / delta ); }
-	else if (rgb_max == rgb.g) { hsv.h = UC( 85 + 43 * (rgb.b - rgb.r) / delta ); }
-	else if (rgb_max == rgb.b) { hsv.h = UC(171 + 43 * (rgb.r - rgb.g) / delta ); }
-	else assert(false);
+	/**/ if (rgb_max == rgb.r)
+	{
+		hsv.h = UC(0 + 43 * (rgb.g - rgb.b) / delta);
+	}
+	else if (rgb_max == rgb.g)
+	{
+		hsv.h = UC(85 + 43 * (rgb.b - rgb.r) / delta);
+	}
+	else if (rgb_max == rgb.b)
+	{
+		hsv.h = UC(171 + 43 * (rgb.r - rgb.g) / delta);
+	}
+	else
+		assert(false);
 
 	return hsv;
+}
+
+static std::string ExtractFileExt(std::string fn)
+{
+	auto p = fn.find_last_of('.');
+	if (p == std::string::npos)
+		return "";
+	std::string ret = fn.substr(p + 1);
+	for (char& c : ret)
+		c = tolower(c);
+	return ret;
+}
+
+static std::string ExtractFileBase(std::string fn)
+{
+	auto p = fn.find_last_of('.');
+	if (p == std::string::npos)
+		return fn;
+	std::string ret = fn.substr(0, p);
+	// for( char& c : ret ) c=tolower(c);
+	return ret;
 }
 
 // ----------------------------------------------------------------------------
@@ -108,18 +169,45 @@ alib::HSVA alib::RGBA_2_HSVA(const RGBA& rgb)
 // *** CIS ***
 // ***********
 
+bool alib::CIS::Load(const std::string& fn)
+{
+	std::string ext = ExtractFileExt(fn);
+	if (ext == "cis")
+	{
+		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
+		if (ifs.bad())
+			return false;
+		Load(ifs);
+		return true;
+	}
+	// else if(ext=="bmp")
+	//{
+	//	SDL_Surface* srf = SDL_LoadBMP(fn.c_str());
+	//	if(!srf) return false;
+	//	SDL_Surface* tm = MakeTransMaskFromImage(srf);
+	//	FromImg(srf,tm,0,0);
+	//	return true;
+	//}
+	// else if(ext=="pcx")
+	//{
+	//	LoadPCX(fn.c_str());
+	//	return true;
+	//}
+	return false;
+}
+
 alib::CIS::CIS()
 {
 #ifndef NO_SFML
-	instanciated = 
+	instanciated =
 #endif
-	loaded = false;
+		loaded = false;
 }
 
-
-template <typename T> inline void ReadBinary(std::istream& istr, T& val)
+template<typename T>
+inline void ReadBinary(std::istream& istr, T& val)
 {
-	int i, n = sizeof(T);
+	int   i, n = sizeof(T);
 	char* p = (char*)&val;
 
 	for (i = 0; i < n; ++i)
@@ -168,7 +256,7 @@ void alib::CIS::Load(std::istream& is)
 	}
 }
 
-void alib::CIS::LoadInternal(std::istream& in,bool)
+void alib::CIS::LoadInternal(std::istream& in, bool)
 {
 	Clear();
 
@@ -180,7 +268,7 @@ void alib::CIS::LoadInternal(std::istream& in,bool)
 	pixeltypes.reserve(sz);
 
 	unsigned char c;
-	int leftbit = 0;
+	int           leftbit = 0;
 
 	for (i = 0; i < sz; ++i)
 	{
@@ -198,33 +286,38 @@ void alib::CIS::LoadInternal(std::istream& in,bool)
 
 		switch (pt)
 		{
-			case alpha:   has_dither = true; break;
-			case trans:   has_trans  = true; break;
-			case colimp:  has_colimp = true; break;
-			default: break;
+		case alpha:
+			has_dither = true;
+			break;
+		case trans:
+			has_trans = true;
+			break;
+		case colimp:
+			has_colimp = true;
+			break;
+		default:
+			break;
 		}
-
 	}
 
 	int odd = 0;
-	UC cc;
+	UC  cc;
 
-	auto GetC_4 = [&odd, &cc](std::istream& is) -> UC
-	{
+	auto GetC_4 = [&odd, &cc](std::istream& is) -> UC {
 		if (!odd)
 		{
 			odd = !odd;
 			ReadBinary(is, cc);
 			return (cc & 0x0F) << 4;
 		}
-		else {
+		else
+		{
 			odd = !odd;
 			return (cc & 0xF0);
 		}
 	};
 
-	auto GetC_6 = [&odd, &cc](std::istream& is) -> UC
-	{
+	auto GetC_6 = [&odd, &cc](std::istream& is) -> UC {
 		UC c2 = cc;
 		switch (odd++ % 4)
 		{
@@ -237,37 +330,56 @@ void alib::CIS::LoadInternal(std::istream& in,bool)
 		case 2:  // 4 + 2
 			ReadBinary(is, cc);
 			return ((c2 & 0x0F) << 4) | ((cc & 0xC0) >> 4);
-		default: // 6 + 0
+		default:  // 6 + 0
 			return (c2 & 0x3F) << 2;
 		}
 	};
 
-	auto GetC_8 = [&odd, &cc](std::istream& is) -> UC
-	{
+	auto GetC_8 = [&odd, &cc](std::istream& is) -> UC {
 		(void)odd;
 		ReadBinary(is, cc);
 		return cc;
 	};
 
-	auto GetC = [&](std::istream& is) -> UC
-	{
-		/**/ if (this->depth == 4) return GetC_4(is);
-		else if (this->depth == 6) return GetC_6(is);
-		else if (this->depth == 8) return GetC_8(is);
-		else { assert(false); return 0; }
+	auto GetC = [&](std::istream& is) -> UC {
+		/**/ if (this->depth == 4)
+			return GetC_4(is);
+		else if (this->depth == 6)
+			return GetC_6(is);
+		else if (this->depth == 8)
+			return GetC_8(is);
+		else
+		{
+			assert(false);
+			return 0;
+		}
 	};
 
 	pixels.clear();
 	pixels.reserve(sz);
 	for (i = 0; i < sz; ++i)
 	{
-		HSVA p = {0,0,0,255};
+		HSVA p = {0, 0, 0, 255};
 		switch (pixeltypes[i])
 		{
-			case alpha:  p.a = 128;  GetC(in);GetC(in);GetC(in); /*need to skip 3 due to bug in writer*/ break;
-			case normal: p.h = GetC(in); p.s = GetC(in); p.v = GetC(in); break;
-			case colimp:                 p.s = GetC(in); p.v = GetC(in); break;
-			case trans:  p.a = 0; break;
+		case alpha:
+			p.a = 128;
+			GetC(in);
+			GetC(in);
+			GetC(in); /*need to skip 3 due to bug in writer*/
+			break;
+		case normal:
+			p.h = GetC(in);
+			p.s = GetC(in);
+			p.v = GetC(in);
+			break;
+		case colimp:
+			p.s = GetC(in);
+			p.v = GetC(in);
+			break;
+		case trans:
+			p.a = 0;
+			break;
 		}
 		pixels.push_back(p);
 	}
@@ -282,21 +394,21 @@ bool alib::CIS::LBS(UC dep, bitsource& src)
 {
 	Clear();
 
-	if (!src.have(dep*2))
-		return false;
-	w = (unsigned short)src.get(2*dep);
 	if (!src.have(dep * 2))
 		return false;
-	h = (unsigned short)src.get(2*dep);
+	w = (unsigned short)src.get(2 * dep);
 	if (!src.have(dep * 2))
 		return false;
-	hot.x = (signed short)src.getS(2*dep);
+	h = (unsigned short)src.get(2 * dep);
 	if (!src.have(dep * 2))
 		return false;
-	hot.y = (signed short)src.getS(2*dep);
+	hot.x = (signed short)src.getS(2 * dep);
+	if (!src.have(dep * 2))
+		return false;
+	hot.y = (signed short)src.getS(2 * dep);
 	depth = dep;
 
-	//assert(depth==6);
+	// assert(depth==6);
 
 	has_dither = has_trans = has_colimp = false;
 
@@ -313,19 +425,26 @@ bool alib::CIS::LBS(UC dep, bitsource& src)
 		pixeltypes.push_back(pt);
 		switch (pt)
 		{
-			case alpha:   has_dither = true; break;
-			case trans:   has_trans  = true; break;
-			case colimp:  has_colimp = true; break;
-			default: break;
+		case alpha:
+			has_dither = true;
+			break;
+		case trans:
+			has_trans = true;
+			break;
+		case colimp:
+			has_colimp = true;
+			break;
+		default:
+			break;
 		}
 	}
-	//src.get( (sz*2) % dep );
+	// src.get( (sz*2) % dep );
 
 	pixels.clear();
 	pixels.reserve(sz);
 	for (i = 0; i < sz; ++i)
 	{
-		HSVA p = {0,0,0,255};
+		HSVA p = {0, 0, 0, 255};
 		switch (pixeltypes[i])
 		{
 		case alpha:
@@ -370,7 +489,7 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 	trg.put((UL)hot.x, dep * 2);
 	trg.put((UL)hot.y, dep * 2);
 
-	//depth = dep;
+	// depth = dep;
 
 	int i, sz = w * h;
 
@@ -382,14 +501,21 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 		trg.put(pt, 2);
 		switch (pt)
 		{
-			case alpha:   assert(has_dither); break;
-			case trans:   assert(has_trans ); break;
-			case colimp:  assert(has_colimp); break;
-			default: break;
+		case alpha:
+			assert(has_dither);
+			break;
+		case trans:
+			assert(has_trans);
+			break;
+		case colimp:
+			assert(has_colimp);
+			break;
+		default:
+			break;
 		}
 	}
 
-	//trg.put(0, (sz * 2) % dep);
+	// trg.put(0, (sz * 2) % dep);
 
 	assert(pixels.size() == sz);
 	for (i = 0; i < sz; ++i)
@@ -416,40 +542,52 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 }
 
 // normal = 0, alpha, trans, colimp };
-namespace alib {
-
+namespace alib
+{
 #ifndef NDEBUG
-//auto& log = std::cerr;
+// auto& log = std::cerr;
 std::ostream log{nullptr};
 #else
 std::ostream log{nullptr};
 #endif
 
-static const RGB nrm = {200,50,50};
-static const RGB alp = {127,127,127};
-static const RGB tra = {255,255,255};
-static const RGB col = {50,50,200};
+static const RGB nrm = {200, 50, 50};
+static const RGB alp = {127, 127, 127};
+static const RGB tra = {255, 255, 255};
+static const RGB col = {50, 50, 200};
+
 void PixTypeSave(int w, int h, const char* lead, int ii, const std::vector<CIS::PixelType>& pts)
 {
 	RGB_Image img;
-	img.w = w; img.h = h;
-	int i, n = w*h;
-	assert (n == pts.size());
+	img.w = w;
+	img.h = h;
+	int i, n = w * h;
+	assert(n == pts.size());
 	img.pix.reserve(n);
-	for (int y=0; y<h; ++y) for (int x=0; x<w; ++x)
-	{
-		i = x + (h-y-1)*w;
-		switch (pts[i])
+	for (int y = 0; y < h; ++y)
+		for (int x = 0; x < w; ++x)
 		{
-		case CIS::normal: img.pix.push_back(nrm); break;
-		case CIS::alpha:  img.pix.push_back(alp); break;
-		case CIS::trans:  img.pix.push_back(tra); break;
-		case CIS::colimp: img.pix.push_back(col); break;
+			i = x + (h - y - 1) * w;
+			switch (pts[i])
+			{
+			case CIS::normal:
+				img.pix.push_back(nrm);
+				break;
+			case CIS::alpha:
+				img.pix.push_back(alp);
+				break;
+			case CIS::trans:
+				img.pix.push_back(tra);
+				break;
+			case CIS::colimp:
+				img.pix.push_back(col);
+				break;
+			}
 		}
-	}
-	std::ofstream ofs{"./gfx/"s + lead + std::to_string(ii) + ".bmp"s, std::fstream::binary };
+	std::ofstream ofs{"./gfx/"s + lead + std::to_string(ii) + ".bmp"s, std::fstream::binary};
 	SaveBMP(img, ofs);
-}}
+}
+}  // namespace alib
 
 void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 {
@@ -458,12 +596,14 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 	assert(w && h && loaded);
 
 	UL WW, HH, HX, HY;
-	WW = ((w + (w%2)) / 2) - 1;
-	HH = ((h + (h%2)) / 2) - 1;
-	assert(WW<1024);
-	assert(HH<1024);
-	HX = UL(hot.x); HX &= ((1ul<<12) - 1);
-	HY = UL(hot.y); HY &= ((1ul<<12) - 1);
+	WW = ((w + (w % 2)) / 2) - 1;
+	HH = ((h + (h % 2)) / 2) - 1;
+	assert(WW < 1024);
+	assert(HH < 1024);
+	HX = UL(hot.x);
+	HX &= ((1ul << 12) - 1);
+	HY = UL(hot.y);
+	HY &= ((1ul << 12) - 1);
 
 	trg.bypass(WW, 10);
 	trg.bypass(HH, 10);
@@ -483,32 +623,36 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 
 	assert(pixeltypes.size() == sz);
 
-	struct Item {
+	struct Item
+	{
 		PixelType pt;
-		UC hval, sval, vval;
-		bool haveh, haves, havev;
+		UC        hval, sval, vval;
+		bool      haveh, haves, havev;
 	};
 	static const bool f = false, t = true;
 
-	UL SZ = WW*HH;
+	UL SZ = WW * HH;
 
 	log << "sz,SZ : " << sz << "," << SZ << endl;
 
-	std::vector<Item> items; items.reserve(SZ);
-	for (UL i = 0; i<SZ; ++i)
+	std::vector<Item> items;
+	items.reserve(SZ);
+	for (UL i = 0; i < SZ; ++i)
 	{
 		PixelType pt;
-		HSVA pix;
-		int x = i % WW;
-		int y = i / WW;
-		if ( (x>=w) || (y>=h) )
+		HSVA      pix;
+		int       x = i % WW;
+		int       y = i / WW;
+		if ((x >= w) || (y >= h))
 		{
-			items.push_back({trans, 0,0,0, f,f,f});
+			items.push_back({trans, 0, 0, 0, f, f, f});
 			continue;
-		} else {
-			auto idx = y*w + x;
-			assert(idx<sz);
-			pt = pixeltypes[idx];
+		}
+		else
+		{
+			auto idx = y * w + x;
+			assert(idx < sz);
+			pt  = pixeltypes[idx];
 			pix = pixels[idx];
 			pix.h >>= (8 - dep);
 			pix.s >>= (8 - dep);
@@ -518,7 +662,7 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 		{
 		case trans:
 			assert(has_trans);
-			items.push_back({pt, 0,0,0, f,f,f});
+			items.push_back({pt, 0, 0, 0, f, f, f});
 			break;
 		case alpha:
 			assert(has_dither);
@@ -532,7 +676,7 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 			items.push_back({pt, 0, pix.s, pix.v, f, t, t});
 			break;
 		default:
-			assert( false && "pixeltype error" );
+			assert(false && "pixeltype error");
 		}
 	}
 
@@ -541,49 +685,51 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 	tokens.reserve(SZ);
 	int dbg = 0;
 
-	auto push = [&](PixelType pt, UL cnt) -> void
-	{
+	auto push = [&](PixelType pt, UL cnt) -> void {
 		assert(cnt);
 		while (cnt >= 64)
 		{
-			trg.bypass( (63ul << 2) | pt , 8 );
+			trg.bypass((63ul << 2) | pt, 8);
 			++dbg;
 			cnt -= 64;
 		}
 		if (cnt)
 		{
-			trg.bypass( (--cnt << 2) | pt, 8);
+			trg.bypass((--cnt << 2) | pt, 8);
 			++dbg;
 		}
 	};
 
-	bool first = true;
+	bool      first = true;
 	PixelType pt;
-	UL cnt;
+	UL        cnt;
 	// part one, the pixtype component
 	for (const auto& itm : items)
 	{
 		if (first)
 		{
-			pt = itm.pt;
-			cnt = 1;
+			pt    = itm.pt;
+			cnt   = 1;
 			first = false;
 		}
 		else if (itm.pt != pt)
 		{
-			if (cnt) push(pt, cnt);
-			pt = itm.pt; cnt=1;
+			if (cnt)
+				push(pt, cnt);
+			pt  = itm.pt;
+			cnt = 1;
 		}
 		else
 		{
 			++cnt;
 		}
 	}
-	if (cnt) push(pt, cnt);
+	if (cnt)
+		push(pt, cnt);
 
 	log << "pushed " << dbg << " rle-tokens for " << SZ << " pixtypes\n";
 
-	//static int sv = 1; PixTypeSave(w, h, "save_", sv++, pixeltypes);
+	// static int sv = 1; PixTypeSave(w, h, "save_", sv++, pixeltypes);
 
 	// part two, the V component
 	tokens.clear();
@@ -595,44 +741,77 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 	trg.compress(tokens);
 	log << "luma 6 x " << tokens.size() << "\n";
 
-	auto idx = [&](int x, int y) { return x + y*WW; };
-	//auto inside = [&](int x, int y) -> bool { return x>=0 && y>=0 && x<w && y<h; };
-	auto get = [&](UL x, UL y) -> Item
-	{
-		assert(x<WW && y<HH);
-		//if (inside(x,y))
-			return items[idx(x,y)];
-		//else
+	auto idx = [&](int x, int y) { return x + y * WW; };
+	// auto inside = [&](int x, int y) -> bool { return x>=0 && y>=0 && x<w && y<h; };
+	auto get = [&](UL x, UL y) -> Item {
+		assert(x < WW && y < HH);
+		// if (inside(x,y))
+		return items[idx(x, y)];
+		// else
 		//	return {trans, 0,0,0, f,f,f};
 	};
 
-	UL mr_hh = 0;
-	UL mr_hs = 0;
-	auto merge_4 = [&](const Item& i1, const Item& i2, const Item& i3, const Item& i4) -> Item
-	{
+	UL   mr_hh   = 0;
+	UL   mr_hs   = 0;
+	auto merge_4 = [&](const Item& i1, const Item& i2, const Item& i3, const Item& i4) -> Item {
 		Item itm;
 		itm.haveh = i1.haveh || i2.haveh || i3.haveh || i4.haveh;
 		itm.haves = i1.haves || i2.haves || i3.haves || i4.haves;
-		if (itm.haveh) ++mr_hh;
-		if (itm.haves) ++mr_hs;
+		if (itm.haveh)
+			++mr_hh;
+		if (itm.haves)
+			++mr_hs;
 
 		if (itm.haveh)
 		{
 			UL hh = 0, hc = 0;
-			if (i1.haveh) { hh += i1.hval; ++hc; }
-			if (i2.haveh) { hh += i2.hval; ++hc; }
-			if (i3.haveh) { hh += i3.hval; ++hc; }
-			if (i4.haveh) { hh += i4.hval; ++hc; }
+			if (i1.haveh)
+			{
+				hh += i1.hval;
+				++hc;
+			}
+			if (i2.haveh)
+			{
+				hh += i2.hval;
+				++hc;
+			}
+			if (i3.haveh)
+			{
+				hh += i3.hval;
+				++hc;
+			}
+			if (i4.haveh)
+			{
+				hh += i4.hval;
+				++hc;
+			}
 			itm.hval = hh / hc;
-		} else
+		}
+		else
 			itm.hval = 0;
 		if (itm.haves)
 		{
 			UL ss = 0, sc = 0;
-			if (i1.haves) { ss += i1.sval; ++sc; }
-			if (i2.haves) { ss += i2.sval; ++sc; }
-			if (i3.haves) { ss += i3.sval; ++sc; }
-			if (i4.haves) { ss += i4.sval; ++sc; }
+			if (i1.haves)
+			{
+				ss += i1.sval;
+				++sc;
+			}
+			if (i2.haves)
+			{
+				ss += i2.sval;
+				++sc;
+			}
+			if (i3.haves)
+			{
+				ss += i3.sval;
+				++sc;
+			}
+			if (i4.haves)
+			{
+				ss += i4.sval;
+				++sc;
+			}
 			itm.sval = ss / sc;
 		}
 		else
@@ -642,21 +821,16 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 	};
 
 	// preparation for part three and four, reduce HS resolution
-	UL downsize = SZ/4; log << "downsize : " << downsize << std::endl;
-	std::vector<Item> items_2; items_2.reserve(downsize);
-	assert((SZ%4) == 0);
+	UL downsize = SZ / 4;
+	log << "downsize : " << downsize << std::endl;
+	std::vector<Item> items_2;
+	items_2.reserve(downsize);
+	assert((SZ % 4) == 0);
 	for (UL i = 0; i < downsize; ++i)
 	{
-		UL x2 = (i % (WW/2))*2;
-		UL y2 = (i / (WW/2))*2;
-		items_2.push_back(
-			merge_4(
-				get(x2+0, y2+0),
-				get(x2+1, y2+0),
-				get(x2+0, y2+1),
-				get(x2+1, y2+1)
-			)
-		);
+		UL x2 = (i % (WW / 2)) * 2;
+		UL y2 = (i / (WW / 2)) * 2;
+		items_2.push_back(merge_4(get(x2 + 0, y2 + 0), get(x2 + 1, y2 + 0), get(x2 + 0, y2 + 1), get(x2 + 1, y2 + 1)));
 	}
 
 	log << "merge result : have hue " << mr_hh << endl;
@@ -681,7 +855,6 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 	}
 	trg.compress(tokens);
 	log << "sat 6 x " << tokens.size() << "\n";
-
 }
 
 bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
@@ -689,17 +862,21 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	using namespace std;
 
 	UL val;
-	if (!src.have(10)) return false;
+	if (!src.have(10))
+		return false;
 	val = src.get(10);
 	log << "W,H : " << val;
-	w = (val+1)*2;
-	if (!src.have(10)) return false;
+	w = (val + 1) * 2;
+	if (!src.have(10))
+		return false;
 	val = src.get(10);
 	log << "," << val << endl;
-	h = (val+1)*2;
-	if (!src.have(12)) return false;
+	h = (val + 1) * 2;
+	if (!src.have(12))
+		return false;
 	hot.x = (short)src.getS(12);
-	if (!src.have(12)) return false;
+	if (!src.have(12))
+		return false;
 	hot.y = (short)src.getS(12);
 
 	UL sz = w * h;
@@ -710,10 +887,11 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	log << "WW,HH : " << w << "," << h << endl;
 	log << "sz : " << sz << endl;
 
-	struct Item {
+	struct Item
+	{
 		PixelType pt;
-		UC hval, sval, vval;
-		bool haveh, haves, havev;
+		UC        hval, sval, vval;
+		bool      haveh, haves, havev;
 	};
 
 	std::vector<Item> items;
@@ -722,55 +900,58 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 
 	has_dither = has_trans = has_colimp = f;
 
-	UL ii = 0, nn = 0, dbg=0;
+	UL ii = 0, nn = 0, dbg = 0;
 
-	while (ii<sz)
+	while (ii < sz)
 	{
 		bool ok = src.have(8);
-		if (!ok) return false;
-		UC xx = src.get(8); ++dbg;
-		nn = (xx >> 2) + 1;
+		if (!ok)
+			return false;
+		UC xx = src.get(8);
+		++dbg;
+		nn           = (xx >> 2) + 1;
 		PixelType pt = PixelType(xx & 3);
 		while (nn--)
 		{
-			if (ii>=sz) break;
+			if (ii >= sz)
+				break;
 			pixeltypes[ii++] = pt;
 		}
 	}
 	log << "unpacked " << dbg << " rle tokens into " << ii << " pixtypes";
-	if (ii!=sz)
+	if (ii != sz)
 		log << ", should be " << sz;
 	log << ".\n";
 
 	assert(ii == sz);
 
-	//static int ld = 1; PixTypeSave(w,h,"load_", ld++, pixeltypes);
+	// static int ld = 1; PixTypeSave(w,h,"load_", ld++, pixeltypes);
 
-	ii=0;
+	ii = 0;
 	for (auto& pt : pixeltypes)
 	{
-		pt = pixeltypes[ii];
+		pt        = pixeltypes[ii];
 		auto& pix = pixels[ii];
 		switch (pt)
 		{
 		case trans:
 			has_trans = true;
-			pix.a = 0;
-			items.push_back({pt, 0,0,0, f,f,f});
+			pix.a     = 0;
+			items.push_back({pt, 0, 0, 0, f, f, f});
 			break;
 		case alpha:
 			has_dither = true;
-			pix.a = 128;
-			items.push_back({pt, 0,0,0, f,f,t});
+			pix.a      = 128;
+			items.push_back({pt, 0, 0, 0, f, f, t});
 			break;
 		case normal:
 			pix.a = 255;
-			items.push_back({pt, 0,0,0, t,t,t});
+			items.push_back({pt, 0, 0, 0, t, t, t});
 			break;
 		case colimp:
 			has_colimp = true;
-			pix.a = 255;
-			items.push_back({pt, 0,0,0, f,t,t});
+			pix.a      = 255;
+			items.push_back({pt, 0, 0, 0, f, t, t});
 			break;
 		default:
 			assert(false && "pixeltype error");
@@ -784,8 +965,8 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 		if (itm.havev)
 		{
 			[[maybe_unused]] bool ok = src.have(dep);
-			assert (ok);
-			itm.vval = src.get(dep) << (8-dep);
+			assert(ok);
+			itm.vval     = src.get(dep) << (8 - dep);
 			pixels[ii].v = itm.vval;
 			++nn;
 		}
@@ -798,31 +979,30 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	UL mr_hh = 0;
 	UL mr_hs = 0;
 
-	auto merge_4 = [&](const Item& i1, const Item& i2, const Item& i3, const Item& i4) -> Item
-	{
+	auto merge_4 = [&](const Item& i1, const Item& i2, const Item& i3, const Item& i4) -> Item {
 		Item itm;
 		itm.haveh = i1.haveh || i2.haveh || i3.haveh || i4.haveh;
 		itm.haves = i1.haves || i2.haves || i3.haves || i4.haves;
-		if (itm.haveh) ++mr_hh;
-		if (itm.haves) ++mr_hs;
+		if (itm.haveh)
+			++mr_hh;
+		if (itm.haves)
+			++mr_hs;
 		return itm;
 	};
 
 	// preparation for part three and four, reduce HS resolution
-	UL downsize = sz / 4; log << "downsize : " << downsize << std::endl;
-	std::vector<Item> items_2; items_2.reserve(downsize);
+	UL downsize = sz / 4;
+	log << "downsize : " << downsize << std::endl;
+	std::vector<Item> items_2;
+	items_2.reserve(downsize);
 	for (UL i = 0; i < downsize; ++i)
 	{
-		int x2 = (i % (w/2)) * 2;
-		int y2 = (i / (w/2)) * 2;
-		items_2.push_back(
-			merge_4(
-				items[idx(x2 + 0, y2 + 0)],
-				items[idx(x2 + 1, y2 + 0)],
-				items[idx(x2 + 0, y2 + 1)],
-				items[idx(x2 + 1, y2 + 1)]
-			)
-		);
+		int x2 = (i % (w / 2)) * 2;
+		int y2 = (i / (w / 2)) * 2;
+		items_2.push_back(merge_4(items[idx(x2 + 0, y2 + 0)],
+								  items[idx(x2 + 1, y2 + 0)],
+								  items[idx(x2 + 0, y2 + 1)],
+								  items[idx(x2 + 1, y2 + 1)]));
 	}
 
 	log << "merge result : have hue " << mr_hh << endl;
@@ -831,14 +1011,15 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	nn = 0;
 	for (UL i = 0; i < downsize; ++i)
 	{
-		int x2 = (i % (w/2)) * 2;
-		int y2 = (i / (w/2)) * 2;
+		int  x2  = (i % (w / 2)) * 2;
+		int  y2  = (i / (w / 2)) * 2;
 		auto itm = items_2[i];
 		if (itm.haveh)
 		{
 			[[maybe_unused]] bool ok = src.have(dep);
-			assert (ok);
-			UC hval = src.get(dep) << (8-dep); ++nn;
+			assert(ok);
+			UC hval = src.get(dep) << (8 - dep);
+			++nn;
 			items[idx(x2 + 0, y2 + 0)].hval = hval;
 			items[idx(x2 + 1, y2 + 0)].hval = hval;
 			items[idx(x2 + 0, y2 + 1)].hval = hval;
@@ -850,14 +1031,15 @@ bool alib::CIS::LoadPacked(UC dep, decompress_bypass_source& src)
 	nn = 0;
 	for (UL i = 0; i < downsize; ++i)
 	{
-		int x2 = (i % (w/2)) * 2;
-		int y2 = (i / (w/2)) * 2;
+		int  x2  = (i % (w / 2)) * 2;
+		int  y2  = (i / (w / 2)) * 2;
 		auto itm = items_2[i];
 		if (itm.haves)
 		{
 			[[maybe_unused]] bool ok = src.have(dep);
-			assert (ok);
-			UC sval = src.get(dep) << (8 - dep); ++nn;
+			assert(ok);
+			UC sval = src.get(dep) << (8 - dep);
+			++nn;
 			items[idx(x2 + 0, y2 + 0)].sval = sval;
 			items[idx(x2 + 1, y2 + 0)].sval = sval;
 			items[idx(x2 + 0, y2 + 1)].sval = sval;
@@ -888,27 +1070,28 @@ auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 	assert(loaded);
 
 	auto itr = images.find(hue);
-	if (itr != images.end()) return itr;
+	if (itr != images.end())
+		return itr;
 	auto res = images.try_emplace(hue);
 	assert(res.second);
 
 	sf::Image img;
 
 	std::vector<RGBA> pix;
-	UL i, n = w*h;
+	UL                i, n = w * h;
 	pix.resize(n);
 
-	for (i=0; i<n; ++i)
+	for (i = 0; i < n; ++i)
 	{
 		RGBA& rgba = pix[i];
-		HSVA hsva = pixels[i];
+		HSVA  hsva = pixels[i];
 		if (pixeltypes[i] == alpha)
 		{
-			rgba = RGBA{hsva.v,hsva.v,hsva.v,128};
+			rgba = RGBA{hsva.v, hsva.v, hsva.v, 128};
 		}
 		else if (pixeltypes[i] == trans)
 		{
-			rgba = RGBA{0,0,0,0};
+			rgba = RGBA{0, 0, 0, 0};
 		}
 		else
 		{
@@ -919,7 +1102,7 @@ auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 		}
 	}
 
-	img.create(w,h,(UC*)pix.data());
+	img.create(w, h, (UC*)pix.data());
 	[[maybe_unused]] bool ok = res.first->second.loadFromImage(img);
 	assert(ok);
 
@@ -989,21 +1172,22 @@ alib::CIS alib::CIS::Flip(bool fx, bool fy, bool rot) const
 
 	if (rot)
 	{
-		cis.w  = h;
-		cis.h  = w;
+		cis.w     = h;
+		cis.h     = w;
 		cis.hot.x = hot.y;
 		cis.hot.y = hot.x;
 	}
-	else {
-		cis.w  = w;
-		cis.h = h;
+	else
+	{
+		cis.w     = w;
+		cis.h     = h;
 		cis.hot.x = fx ? w - hot.x : hot.x;
 		cis.hot.y = fy ? h - hot.y : hot.y;
 	}
 	cis.has_dither = has_dither;
 	cis.has_trans  = has_trans;
 	cis.has_colimp = has_colimp;
-	cis.loaded       = true;
+	cis.loaded     = true;
 
 #ifndef NO_SFML
 	cis.instanciated = false;
@@ -1011,18 +1195,21 @@ alib::CIS alib::CIS::Flip(bool fx, bool fy, bool rot) const
 
 	int x, y, i, n = w * h;
 
-	pt.clear(); pt.reserve(n);
-	px.clear(); px.reserve(n);
+	pt.clear();
+	pt.reserve(n);
+	px.clear();
+	px.reserve(n);
 
 	for (i = 0; i < n; ++i)
 	{
 		if (rot)
 		{
-			x = fx ? h - (i%h) - 1 : (i%h);
+			x = fx ? h - (i % h) - 1 : (i % h);
 			y = fy ? w - (i / h) - 1 : (i / h);
 		}
-		else {
-			x = fx ? w - (i%w) - 1 : (i%w);
+		else
+		{
+			x = fx ? w - (i % w) - 1 : (i % w);
 			y = fy ? h - (i / w) - 1 : (i / w);
 		}
 		pt.push_back(pixeltypes[x + y * w]);
@@ -1033,9 +1220,9 @@ alib::CIS alib::CIS::Flip(bool fx, bool fy, bool rot) const
 
 void alib::CIS::Crop()
 {
-	const int W = w;
-	auto xy = [&W](int x, int y) -> int { return y * W + x; };
-	int topcrop = 0;
+	const int W       = w;
+	auto      xy      = [&W](int x, int y) -> int { return y * W + x; };
+	int       topcrop = 0;
 	while (topcrop < h)
 	{
 		bool empty = true;
@@ -1044,9 +1231,18 @@ void alib::CIS::Crop()
 			if (pixeltypes[xy(x, topcrop)] != trans)
 				empty = false;
 		}
-		if (empty) ++topcrop; else break;
+		if (empty)
+			++topcrop;
+		else
+			break;
 	}
-	if (topcrop == h) { w = h = 0; pixeltypes.clear(); pixels.clear(); return; }
+	if (topcrop == h)
+	{
+		w = h = 0;
+		pixeltypes.clear();
+		pixels.clear();
+		return;
+	}
 	int botcrop = 0;
 	while (true)
 	{
@@ -1056,7 +1252,10 @@ void alib::CIS::Crop()
 			if (pixeltypes[xy(x, h - botcrop - 1)] != trans)
 				empty = false;
 		}
-		if (empty) ++botcrop; else break;
+		if (empty)
+			++botcrop;
+		else
+			break;
 	}
 	int lftcrop = 0;
 	while (true)
@@ -1067,7 +1266,10 @@ void alib::CIS::Crop()
 			if (pixeltypes[xy(lftcrop, y)] != trans)
 				empty = false;
 		}
-		if (empty) ++lftcrop; else break;
+		if (empty)
+			++lftcrop;
+		else
+			break;
 	}
 	int rghcrop = 0;
 	while (true)
@@ -1078,46 +1280,52 @@ void alib::CIS::Crop()
 			if (pixeltypes[xy(w - rghcrop - 1, y)] != trans)
 				empty = false;
 		}
-		if (empty) ++rghcrop; else break;
+		if (empty)
+			++rghcrop;
+		else
+			break;
 	}
 	int new_w = w - lftcrop - rghcrop;
 	int new_h = h - topcrop - botcrop;
 	assert((new_w > 0) && (new_w <= w) && (new_h > 0) && (new_h <= h));
-	std::vector<PixelType> new_pt; new_pt.reserve(new_w*new_h);
-	std::vector<HSVA>      new_px; new_px.reserve(new_w*new_h);
-	for (int y = 0; y < new_h; ++y) for (int x = 0; x < new_w; ++x)
-	{
-		int idx = xy(x + lftcrop, y + topcrop);
-		new_pt.push_back(pixeltypes[idx]);
-		new_px.push_back(pixels[idx]);
-	}
+	std::vector<PixelType> new_pt;
+	new_pt.reserve(new_w * new_h);
+	std::vector<HSVA> new_px;
+	new_px.reserve(new_w * new_h);
+	for (int y = 0; y < new_h; ++y)
+		for (int x = 0; x < new_w; ++x)
+		{
+			int idx = xy(x + lftcrop, y + topcrop);
+			new_pt.push_back(pixeltypes[idx]);
+			new_px.push_back(pixels[idx]);
+		}
 	pixeltypes = std::move(new_pt);
-	pixels = std::move(new_px); //.clear(); pixels.assign(new_px.begin(), new_px.end());
-	w = new_w; h = new_h;
-	hot.x -= lftcrop; hot.y -= topcrop;
+	pixels     = std::move(new_px);  //.clear(); pixels.assign(new_px.begin(), new_px.end());
+	w          = new_w;
+	h          = new_h;
+	hot.x -= lftcrop;
+	hot.y -= topcrop;
 }
 
-namespace alib {
-	bool operator==(const alib::RGB& lhs, const alib::RGB& rhs)
-	{
-		return
-			lhs.r == rhs.r &&
-			lhs.g == rhs.g &&
-			lhs.b == rhs.b;
-	}
+namespace alib
+{
+bool operator==(const alib::RGB& lhs, const alib::RGB& rhs)
+{
+	return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
 }
+}  // namespace alib
 
 void alib::CIS::LoadBMP(const char* fn, RGB colorkey, short hx, short hy)
 {
-	RGB_Image img;
+	RGB_Image     img;
 	std::ifstream ifs{fn, std::fstream::binary | std::fstream::in};
 	alib::LoadBMP(img, ifs);
 
 	CIS& cis = *this;
 
-	cis.w = (unsigned short)img.w;
-	cis.h = (unsigned short)img.h;
-	cis.hot = {hx,hy};
+	cis.w   = (unsigned short)img.w;
+	cis.h   = (unsigned short)img.h;
+	cis.hot = {hx, hy};
 
 	has_dither = has_trans = has_colimp = false;
 
@@ -1128,7 +1336,7 @@ void alib::CIS::LoadBMP(const char* fn, RGB colorkey, short hx, short hy)
 	cis.pixeltypes.clear();
 	cis.pixeltypes.reserve(sz);
 
-	HSVA tr = RGBA_2_HSVA({0,0,0,0});
+	HSVA tr = RGBA_2_HSVA({0, 0, 0, 0});
 	for (i = 0; i < sz; ++i)
 	{
 		RGB rgb = img.pix[i];
@@ -1155,39 +1363,41 @@ void alib::CIS::SaveBMP(const char* fn, UC hue, RGB colorkey) const
 
 	img.w = w;
 	img.h = h;
-	UL sz = w*h;
+	UL sz = w * h;
 	img.pix.resize(sz);
 	for (auto i = 0ul; i < sz; ++i)
 	{
-		UL x = i % w;
-		UL y = i / w;
-		RGB& rgb = img.pix[x + (h-y-1)*w];
+		UL   x   = i % w;
+		UL   y   = i / w;
+		RGB& rgb = img.pix[x + (h - y - 1) * w];
 		RGBA p;
 		switch (pixeltypes[i])
 		{
-			case normal:
-				p = HSVA_2_RGBA(pixels[i]);
+		case normal:
+			p   = HSVA_2_RGBA(pixels[i]);
+			rgb = {p.b, p.g, p.r};
+			break;
+		case trans:
+			rgb = colorkey;
+			break;
+		case alpha:
+			if ((x + y) % 2)
+			{
+				p   = HSVA_2_RGBA(pixels[i]);
 				rgb = {p.b, p.g, p.r};
-				break;
-			case trans:
+			}
+			else
+			{
 				rgb = colorkey;
-				break;
-			case alpha:
-				if ((x+y) % 2)
-				{
-					p = HSVA_2_RGBA(pixels[i]);
-					rgb = {p.b, p.g, p.r};
-				} else {
-					rgb = colorkey;
-				}
-				break;
-			case colimp:
-				p = HSVA_2_RGBA({hue,pixels[i].s,pixels[i].v,255});
-				rgb = {p.b, p.g, p.r};
-				break;
-			default:
-				assert(false && "pixel-type error");
-				break;
+			}
+			break;
+		case colimp:
+			p   = HSVA_2_RGBA({hue, pixels[i].s, pixels[i].v, 255});
+			rgb = {p.b, p.g, p.r};
+			break;
+		default:
+			assert(false && "pixel-type error");
+			break;
 		}
 	}
 	std::ofstream ofs{fn, std::fstream::binary | std::fstream::out};
@@ -1200,13 +1410,35 @@ void alib::CIS::SaveBMP(const char* fn, UC hue, RGB colorkey) const
 // *** BasicAnim ***
 // *****************
 
+bool alib::BasicAnim::Load(const std::string& fn)
+{
+	std::string ext = ExtractFileExt(fn);
+	if (ext == "ba")
+	{
+		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
+		Load(ifs);
+		return true;
+	}
+	else
+	{
+		CIS cis;
+		if (cis.Load(fn))
+		{
+			anim.clear();
+			anim.push_back(cis);
+			return true;
+		}
+	}
+	return false;
+}
+
 void alib::BasicAnim::LoadOld(std::istream& is)
 {
 	ReadBinary(is, delay);
 	short val;
 	ReadBinary(is, val);
 	repeating = (bool)val;
-	jbf = 0;
+	jbf       = 0;
 	LoadInternal(is, true);
 }
 
@@ -1218,7 +1450,7 @@ void alib::BasicAnim::Load(std::istream& is)
 	boost::to_lower(magic);
 	if (magic == "bap1")
 	{
-		streamsource ss{is};
+		streamsource             ss{is};
 		decompress_bypass_source dbs{6, ss};
 		LoadPacked(6, dbs);
 	}
@@ -1228,7 +1460,7 @@ void alib::BasicAnim::Load(std::istream& is)
 		short val;
 		ReadBinary(is, val);
 		repeating = (bool)(val >> 15);
-		jbf = val & 0x7FFF;
+		jbf       = val & 0x7FFF;
 		LoadInternal(is);
 	}
 	else if (magic == "ba_3")
@@ -1252,26 +1484,30 @@ void alib::BasicAnim::LoadInternal(std::istream& in, bool)
 	{
 		cis.Load(in);
 	}
-	//delay = short(delay*0.75f);
+	// delay = short(delay*0.75f);
 }
 
 bool alib::BasicAnim::LBS(UC dep, bitsource& src)
 {
-	if (!src.have(dep*2)) return false;
-	delay = (short)src.get(dep*2);
-	if (!src.have(dep * 2)) return false;
-	UL val = src.get(dep*2);
-	repeating = (bool)(val >> (dep*2-1));
-	jbf = val & ((1<<(dep*2-1))-1);
-	if (!src.have(dep * 2)) return false;
+	if (!src.have(dep * 2))
+		return false;
+	delay = (short)src.get(dep * 2);
+	if (!src.have(dep * 2))
+		return false;
+	UL val    = src.get(dep * 2);
+	repeating = (bool)(val >> (dep * 2 - 1));
+	jbf       = val & ((1 << (dep * 2 - 1)) - 1);
+	if (!src.have(dep * 2))
+		return false;
 	val = src.get(dep * 2);
 	anim.clear();
 	anim.reserve(val);
 	while (val--)
 	{
-		CIS cis;
+		CIS  cis;
 		bool ok = cis.LBS(dep, src);
-		if (!ok) return false;
+		if (!ok)
+			return false;
 		anim.push_back(std::move(cis));
 	}
 
@@ -1280,34 +1516,37 @@ bool alib::BasicAnim::LBS(UC dep, bitsource& src)
 
 bool alib::BasicAnim::LoadPacked(UC dep, decompress_bypass_source& src)
 {
-	//src.reset();
-	if (!src.have(10)) return false;
+	// src.reset();
+	if (!src.have(10))
+		return false;
 	delay = src.get(10);
-	if (!src.have(10)) return false;
+	if (!src.have(10))
+		return false;
 	repeating = src.get(1);
-	jbf = src.get(9);
-	if (!src.have(10)) return false;
+	jbf       = src.get(9);
+	if (!src.have(10))
+		return false;
 	UL val = src.get(10);
 	anim.resize(val);
-	//int ii = 1;
+	// int ii = 1;
 	for (CIS& cis : anim)
 	{
 		bool ok = cis.LoadPacked(dep, src);
-		if (!ok) return false;
-		//cis.SaveBMP( ("gfx/img_"s + std::to_string(ii++) + ".bmp"s).c_str(), 55, {255,0,255});
+		if (!ok)
+			return false;
+		// cis.SaveBMP( ("gfx/img_"s + std::to_string(ii++) + ".bmp"s).c_str(), 55, {255,0,255});
 	}
 	return true;
 }
 
-
 void alib::BasicAnim::SBT(UC dep, bittarget& trg) const
 {
-	trg.put(delay, dep*2);
-	UL val = repeating ? (1<<(dep*2-1)) : 0;
+	trg.put(delay, dep * 2);
+	UL val = repeating ? (1 << (dep * 2 - 1)) : 0;
 	val |= jbf;
-	trg.put(val, dep*2);
+	trg.put(val, dep * 2);
 	val = (UL)anim.size();
-	trg.put(val, dep*2);
+	trg.put(val, dep * 2);
 	for (const CIS& cis : anim)
 	{
 		cis.SBT(dep, trg);
@@ -1316,7 +1555,7 @@ void alib::BasicAnim::SBT(UC dep, bittarget& trg) const
 
 void alib::BasicAnim::SavePacked(UC dep, compress_bypass_target& trg) const
 {
-	//trg.reset();
+	// trg.reset();
 	trg.bypass(delay, 10);
 	trg.bypass(repeating, 1);
 	trg.bypass(jbf, 9);
@@ -1330,9 +1569,9 @@ void alib::BasicAnim::SavePacked(UC dep, compress_bypass_target& trg) const
 
 void alib::BasicAnim::MakeMirror(BasicAnim& ba, bool mx, bool my, bool rot)
 {
-	delay = ba.delay;
+	delay     = ba.delay;
 	repeating = ba.repeating;
-	jbf = ba.jbf;
+	jbf       = ba.jbf;
 	anim.clear();
 	for (CIS& cis : ba.anim)
 		anim.push_back(cis.Flip(mx, my, rot));
@@ -1371,6 +1610,30 @@ sf::Texture& alib::BasicAnim::Get(int frame, UC hue)
 // *** AnimDir ***
 // ***************
 
+bool alib::AnimDir::Load(const std::string& fn)
+{
+	std::string ext = ExtractFileExt(fn);
+	if (ext == "ad")
+	{
+		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
+		Load(ifs);
+		return true;
+	}
+	else
+	{
+		BAD bd;
+		if (bd.Load(fn))
+		{
+			bad.clear();
+			bd.dir    = 0;
+			bd.mirror = false;
+			bad.push_back(bd);
+			return true;
+		}
+	}
+	return false;
+}
+
 #ifndef NO_SFML
 void alib::AnimDir::Instance(UC hue)
 {
@@ -1393,7 +1656,7 @@ void alib::AnimDir::Load(std::istream& is)
 	boost::to_lower(magic);
 	if (magic == "adp1")
 	{
-		streamsource ss{is};
+		streamsource             ss{is};
 		decompress_bypass_source dbs{6, ss};
 		LoadPacked(6, dbs);
 	}
@@ -1413,7 +1676,10 @@ void alib::AnimDir::Load(std::istream& is)
 	}
 }
 
-void alib::AnimDir::LoadOld(std::istream& is) { LoadInternal(is, true); }
+void alib::AnimDir::LoadOld(std::istream& is)
+{
+	LoadInternal(is, true);
+}
 
 void alib::AnimDir::LoadInternal(std::istream& is, bool old)
 {
@@ -1431,12 +1697,13 @@ void alib::AnimDir::LoadInternal(std::istream& is, bool old)
 		if (uc)
 		{
 			b.mirror = true;
-			b.flipx = uc & 2;
-			b.flipy = uc & 4;
-			b.rot90 = uc & 8;
+			b.flipx  = uc & 2;
+			b.flipy  = uc & 4;
+			b.rot90  = uc & 8;
 			ReadBinary(is, b.mirrorof);
 		}
-		else {
+		else
+		{
 			if (old)
 				b.LoadOld(is);
 			else
@@ -1450,32 +1717,39 @@ void alib::AnimDir::LoadInternal(std::istream& is, bool old)
 bool alib::AnimDir::LBS(UC dep, bitsource& src)
 {
 	short i, n;
-	if (!src.have(dep*2)) return false;
-	n = (short)src.get(dep*2);
+	if (!src.have(dep * 2))
+		return false;
+	n = (short)src.get(dep * 2);
 	bad.clear();
 	bad.reserve(n);
 	for (i = 0; i < n; ++i)
 	{
 		bad.emplace_back();
 		BAD& b = bad.back();
-		if (!src.have(dep*3)) return false;
+		if (!src.have(dep * 3))
+			return false;
 		auto d = dep;
-		while (d<9) d += dep;
-		if (!src.have(d+dep)) return false;
+		while (d < 9)
+			d += dep;
+		if (!src.have(d + dep))
+			return false;
 		b.dir = (short)src.get(d);
 		UC uc = (UC)src.get(dep);
 		if (uc)
 		{
 			b.mirror = true;
-			b.flipx = uc & 2;
-			b.flipy = uc & 4;
-			b.rot90 = uc & 8;
-			if (!src.have(dep * 2)) return false;
+			b.flipx  = uc & 2;
+			b.flipy  = uc & 4;
+			b.rot90  = uc & 8;
+			if (!src.have(dep * 2))
+				return false;
 			b.mirrorof = (short)src.get(d);
 		}
-		else {
+		else
+		{
 			bool ok = b.LBS(dep, src);
-			if (!ok) return false;
+			if (!ok)
+				return false;
 			b.mirror = false;
 		}
 	}
@@ -1487,24 +1761,29 @@ bool alib::AnimDir::LBS(UC dep, bitsource& src)
 void alib::AnimDir::SBT(UC dep, bittarget& trg) const
 {
 	UL i, n = (UL)bad.size();
-	trg.put(n, dep*2);
+	trg.put(n, dep * 2);
 	for (i = 0; i < n; ++i)
 	{
 		const BAD& b = bad[i];
-		auto d = dep;
-		while (d < 9) d += dep;
+		auto       d = dep;
+		while (d < 9)
+			d += dep;
 		trg.put(b.dir, d);
 		UC uc = 0;
 		if (b.mirror)
 		{
 			uc = 1;
-			if (b.flipx) uc |= 2;
-			if (b.flipy) uc |= 4;
-			if (b.rot90) uc |= 8;
+			if (b.flipx)
+				uc |= 2;
+			if (b.flipy)
+				uc |= 4;
+			if (b.rot90)
+				uc |= 8;
 			trg.put(uc, dep);
 			trg.put(b.mirrorof, d);
 		}
-		else {
+		else
+		{
 			trg.put(0, dep);
 			b.SBT(dep, trg);
 		}
@@ -1523,13 +1802,17 @@ void alib::AnimDir::SavePacked(UC dep, compress_bypass_target& cbt) const
 		if (b.mirror)
 		{
 			uc = 1;
-			if (b.flipx) uc |= 2;
-			if (b.flipy) uc |= 4;
-			if (b.rot90) uc |= 8;
+			if (b.flipx)
+				uc |= 2;
+			if (b.flipy)
+				uc |= 4;
+			if (b.rot90)
+				uc |= 8;
 			cbt.bypass(uc, 4);
 			cbt.bypass(b.mirrorof, 9);
 		}
-		else {
+		else
+		{
 			cbt.bypass(0, 4);
 			b.SavePacked(dep, cbt);
 		}
@@ -1539,7 +1822,8 @@ void alib::AnimDir::SavePacked(UC dep, compress_bypass_target& cbt) const
 bool alib::AnimDir::LoadPacked(UC dep, decompress_bypass_source& src)
 {
 	short i, n;
-	if (!src.have(10)) return false;
+	if (!src.have(10))
+		return false;
 	n = (short)src.get(10);
 	bad.clear();
 	bad.reserve(n);
@@ -1547,21 +1831,25 @@ bool alib::AnimDir::LoadPacked(UC dep, decompress_bypass_source& src)
 	{
 		bad.emplace_back();
 		BAD& b = bad.back();
-		if (!src.have(4+9)) return false;
+		if (!src.have(4 + 9))
+			return false;
 		b.dir = (short)src.get(9);
 		UC uc = (UC)src.get(4);
 		if (uc)
 		{
 			b.mirror = true;
-			b.flipx = uc & 2;
-			b.flipy = uc & 4;
-			b.rot90 = uc & 8;
-			if (!src.have(9)) return false;
+			b.flipx  = uc & 2;
+			b.flipy  = uc & 4;
+			b.rot90  = uc & 8;
+			if (!src.have(9))
+				return false;
 			b.mirrorof = (short)src.get(9);
 		}
-		else {
+		else
+		{
 			bool ok = b.LoadPacked(dep, src);
-			if (!ok) return false;
+			if (!ok)
+				return false;
 			b.mirror = false;
 		}
 	}
@@ -1572,21 +1860,23 @@ bool alib::AnimDir::LoadPacked(UC dep, decompress_bypass_source& src)
 
 void alib::AnimDir::CreateDir(short dir, bool repeating, short delay, short jbf)
 {
-	if (findexact(dir)) return;
+	if (findexact(dir))
+		return;
 	bad.emplace_back();
-	BAD& d = bad.back();
-	d.dir = dir; d.mirrorof = dir;
+	BAD& d      = bad.back();
+	d.dir       = dir;
+	d.mirrorof  = dir;
 	d.repeating = repeating;
 	d.mirror = d.flipx = d.flipy = d.rot90 = false;
-	d.delay = delay;
-	d.jbf = jbf;
+	d.delay                                = delay;
+	d.jbf                                  = jbf;
 }
 
 void alib::AnimDir::AddFrameTo(short dir, CIS&& cis)
 {
 	BAD* d = findexact(dir);
 	assert(d);
-	d->anim.push_back( std::move(cis) );
+	d->anim.push_back(std::move(cis));
 }
 
 void alib::AnimDir::Clear()
@@ -1598,7 +1888,8 @@ auto alib::AnimDir::findexact(short d) -> AnimDir::BAD*
 {
 	for (BAD& bd : bad)
 	{
-		if (bd.dir == d) return &bd;
+		if (bd.dir == d)
+			return &bd;
 	}
 	return 0;
 }
@@ -1613,15 +1904,17 @@ alib::AnimReflection alib::AnimDir::Refl(short dir, UC hue)
 template<typename T, typename U>
 T& BestFit(short dir, U& vec)
 {
-	auto dirdiff = [](short d1, short d2) -> short
-	{
-		short df = std::abs(d1 - d2);
-		if (df > 180) df = 360 - 180;
+	auto dirdiff = [](std::int16_t d1, std::int16_t d2) -> short {
+		std::int16_t df = abs(d1 - d2);
+		while (df > 360)
+			df -= 360;
+		if (df > 180)
+			df = 360 - df;
 		return df;
 	};
 
 	int idx = 0;
-	int n = (int)vec.size();
+	int n   = (int)vec.size();
 	assert(n);
 	int srt = dirdiff(dir, vec[0].dir);
 	for (int i = 1; i < n; ++i)
@@ -1666,6 +1959,30 @@ extern std::string ExtractFileNameOnly(std::string fn);
 		return fn.substr(p1 + 1, p2 - p1);
 }*/
 
+bool alib::NAV::Load(const std::string& fn)
+{
+	std::string ext = boost::to_lower_copy(ExtractFileExt(fn));
+
+	if (ext == "nav")
+	{
+		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
+		Load(ifs);
+		return true;
+	}
+	else
+	{
+		AD ad;
+		if (ad.Load(fn))
+		{
+			variants.clear();
+			variants.push_back(ad);
+			name = ExtractFileNameOnly(fn);
+			return true;
+		}
+	}
+	return false;
+}
+
 #ifndef NO_SFML
 void alib::NAV::Instance(UC hue)
 {
@@ -1687,7 +2004,8 @@ static std::string LoadStr(std::istream& is)
 	{
 		char c;
 		ReadBinary(is, c);
-		if (!c) break;
+		if (!c)
+			break;
 		s += c;
 	}
 	return s;
@@ -1714,21 +2032,19 @@ void alib::NAV::LoadInternal(std::istream& is, bool old)
 	}
 }
 
-static char table[/*1<<6*/] = 
-{
-	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-	'_', '-', '+', '.', ',', ':', ';', '*', '!', '@', '"', '\'', '/', '\\', '(', ')', '=', '[', ']', '{', '}', '&', '%', '#', '$', '|', '~', '?'
-};
+static char table[/*1<<6*/] = {'a', 'b',  'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+							   'q', 'r',  's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5',
+							   '6', '7',  '8', '9', '_', '-', '+', '.', ',', ':', ';', '*', '!', '@', '"', '\'',
+							   '/', '\\', '(', ')', '=', '[', ']', '{', '}', '&', '%', '#', '$', '|', '~', '?'};
 
 void string_out_6(const std::string& str, bittarget& trg)
 {
-	UC len = (UC)std::min<size_t>( str.length(), 63 );
+	UC len = (UC)std::min<size_t>(str.length(), 63);
 	trg.put(len, 6);
-	for (int idx = 0; idx<len; ++idx)
+	for (int idx = 0; idx < len; ++idx)
 	{
 		UC tok;
-		for(tok=0; tok<63; ++tok)
+		for (tok = 0; tok < 63; ++tok)
 		{
 			if (table[tok] == str[idx])
 				break;
@@ -1739,13 +2055,15 @@ void string_out_6(const std::string& str, bittarget& trg)
 
 std::string string_in_6(bitsource& src)
 {
-	if (!src.have(6)) return ""s;
-	UC len = (UC)src.get(6);
+	if (!src.have(6))
+		return ""s;
+	UC          len = (UC)src.get(6);
 	std::string ret;
 	ret.reserve(len);
 	for (int idx = 0; idx < len; ++idx)
 	{
-		if (!src.have(6)) break;
+		if (!src.have(6))
+			break;
 		UC tok = (UC)src.get(6);
 		ret += table[tok];
 	}
@@ -1754,13 +2072,13 @@ std::string string_in_6(bitsource& src)
 
 void string_out_8(const std::string& str, bittarget& trg)
 {
-	//auto len = str.length();
+	// auto len = str.length();
 	for (char c : str)
 	{
 		assert(c);
-		trg.put(c,8);
+		trg.put(c, 8);
 	}
-	trg.put(0,8);
+	trg.put(0, 8);
 }
 
 std::string string_in_8(bitsource& src)
@@ -1769,7 +2087,8 @@ std::string string_in_8(bitsource& src)
 	while (true)
 	{
 		char c = (char)src.get(8);
-		if (!c) break;
+		if (!c)
+			break;
 		ret += c;
 	}
 	return ret;
@@ -1777,29 +2096,34 @@ std::string string_in_8(bitsource& src)
 
 bool alib::NAV::LBS(UC dep, bitsource& src)
 {
-	name = ((dep==6)?&string_in_6:&string_in_8)(src);
-	if (!src.have(dep)) return false;
+	name = ((dep == 6) ? &string_in_6 : &string_in_8)(src);
+	if (!src.have(dep))
+		return false;
 	UL vars = src.get(dep);
 	variants.clear();
 	for (UL i = 0; i < vars; ++i)
 	{
 		variants.emplace_back();
 		bool ok = variants.back().LBS(dep, src);
-		if (!ok) return false;
+		if (!ok)
+			return false;
 	}
 	return true;
 }
 
 void alib::NAV::SBT(UC dep, bittarget& trg) const
 {
-	((dep==6)?&string_out_6:&string_out_8)(name, trg);
+	((dep == 6) ? &string_out_6 : &string_out_8)(name, trg);
 	UL vars = (UL)variants.size();
 	trg.put(vars, dep);
 	for (const auto& v : variants)
 		v.SBT(dep, trg);
 }
 
-void alib::NAV::LoadOld(std::istream& is) { LoadInternal(is, true); }
+void alib::NAV::LoadOld(std::istream& is)
+{
+	LoadInternal(is, true);
+}
 
 void alib::NAV::Load(std::istream& is)
 {
@@ -1825,7 +2149,7 @@ void alib::NAV::Load(std::istream& is)
 #ifndef NO_SFML
 auto alib::NAV::Refl(short dir, UC hue) -> AnimReflection
 {
-	int i = rand() % variants.size();
+	int            i = rand() % variants.size();
 	AnimReflection ar(&variants[i].Closest(dir), hue);
 	return ar;
 }
@@ -1838,12 +2162,15 @@ void alib::NAV::SavePacked(UC dep, compress_bypass_target& cbt) const
 	while (true)
 	{
 		auto sz = btc.bitcount();
-		if (!sz) break;
+		if (!sz)
+			break;
 		if (sz >= 24)
 		{
 			UL bits = btc.get(24);
 			cbt.bypass(bits, 24);
-		} else {
+		}
+		else
+		{
 			UL bits = btc.get(sz);
 			cbt.bypass(bits, sz);
 		}
@@ -1858,15 +2185,17 @@ void alib::NAV::SavePacked(UC dep, compress_bypass_target& cbt) const
 bool alib::NAV::LoadPacked(UC dep, decompress_bypass_source& src)
 {
 	name = string_in_6(src);
-	if (!src.have(5)) return false;
+	if (!src.have(5))
+		return false;
 	UL vars = src.get(5);
 	variants.clear();
 	for (UL i = 0; i < vars; ++i)
 	{
 		variants.emplace_back();
-		auto& a = variants.back();
-		bool ok = a.LoadPacked(dep, src);
-		if (!ok) return false;
+		auto& a  = variants.back();
+		bool  ok = a.LoadPacked(dep, src);
+		if (!ok)
+			return false;
 	}
 	return true;
 }
@@ -1877,6 +2206,53 @@ bool alib::NAV::LoadPacked(UC dep, decompress_bypass_source& src)
 // *** AnimCollection ***
 // **********************
 
+bool alib::AnimCollection::Load(const std::string& fn)
+{
+	extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
+
+	std::string ext = boost::to_lower_copy(ExtractFileExt(fn));
+
+	/**/ if (ext == "fzac")
+	{
+		std::ifstream ifs{fn, std::fstream::binary};
+		auto          sz = fs::file_size(fn);
+		BVec          v1, v2;
+		v1.resize(sz);
+		ifs.read((char*)v1.data(), sz);
+		bool ok = LZMADecompress(v1, v2);
+		ok      = ok && LoadFast(v2);
+		return ok;
+	}
+	else if (ext == "fac")
+	{
+		std::ifstream ifs{fn, std::fstream::binary};
+		auto          sz = fs::file_size(fn);
+		BVec          v1, v2;
+		v1.resize(sz);
+		ifs.read((char*)v1.data(), sz);
+		return LoadFast(v2);
+	}
+	else if (ext == "ac")
+	{
+		// std::cout << "loading file " << fn << " ext " << ext << std::endl;
+		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
+		Load(ifs);
+		return true;
+	}
+	else
+	{
+		NAV nav;
+		if (nav.Load(fn))
+		{
+			// FreeData();
+			core.push_back(nav);
+			mappings[nav.name] = &core.front();
+			return true;
+		}
+	}
+	return false;
+}
+
 #ifndef NO_SFML
 void alib::AnimCollection::Instance(UC hue)
 {
@@ -1886,7 +2262,7 @@ void alib::AnimCollection::Instance(UC hue)
 
 auto alib::AnimCollection::Refl(std::string name, short dir, UC hue) -> AnimReflection
 {
-	//boost::trim(name);
+	// boost::trim(name);
 	auto itr = mappings.find(name);
 	auto end = mappings.end();
 	if ((itr == end) && default_anim.size())
@@ -1913,13 +2289,14 @@ void alib::AnimCollection::AddVariant(std::string name, AnimDir ad)
 	if (itr == mappings.end())
 	{
 		core.emplace_back();
-		NAV* nav = &core.back();
+		NAV* nav       = &core.back();
 		mappings[name] = nav;
-		nav->name = std::move(name);
+		nav->name      = std::move(name);
 		nav->variants.clear();
 		nav->variants.push_back(std::move(ad));
 	}
-	else {
+	else
+	{
 		itr->second->variants.push_back(std::move(ad));
 	}
 }
@@ -1930,7 +2307,7 @@ void alib::AnimCollection::LoadInternal(std::istream& is, bool old)
 	mappings.clear();
 	char n;
 	ReadBinary(is, n);
-	//core.reserve(n);
+	// core.reserve(n);
 	for (int i = 0; i < n; ++i)
 	{
 		core.emplace_back();
@@ -1944,9 +2321,9 @@ void alib::AnimCollection::LoadInternal(std::istream& is, bool old)
 	ReadBinary(is, n);
 	for (int i = 0; i < n; ++i)
 	{
-		std::string name = LoadStr(is);
+		std::string name  = LoadStr(is);
 		std::string mapof = LoadStr(is);
-		auto itr = mappings.find(mapof);
+		auto        itr   = mappings.find(mapof);
 		assert(itr != mappings.end());
 		mappings[name] = itr->second;
 	}
@@ -1957,14 +2334,15 @@ bool alib::AnimCollection::LBS(UC dep, bitsource& src)
 	core.clear();
 	mappings.clear();
 	UL n;
-	if (!src.have(dep)) return false;
+	if (!src.have(dep))
+		return false;
 	n = src.get(dep);
-	//core.reserve(n);
+	// core.reserve(n);
 	for (UL i = 0; i < n; ++i)
 	{
 		core.emplace_back();
 		NAV* nav = &core.back();
-		nav->LBS(dep,src);
+		nav->LBS(dep, src);
 		mappings[nav->name] = nav;
 	}
 
@@ -1996,22 +2374,27 @@ bool alib::AnimCollection::LoadPacked(UC dep, decompress_bypass_source& src)
 	core.clear();
 	mappings.clear();
 	UL n;
-	if (!src.have(5)) return false;
+	if (!src.have(5))
+		return false;
 	n = src.get(5);
-	//core.reserve(n);
+	// core.reserve(n);
 	for (UL i = 0; i < n; ++i)
 	{
 		core.emplace_back();
 		NAV* nav = &core.back();
-		bool ok = nav->LoadPacked(dep, src);
-		if (!ok) return false;
+		bool ok  = nav->LoadPacked(dep, src);
+		if (!ok)
+			return false;
 		mappings[nav->name] = nav;
 	}
 
 	return true;
 }
 
-void alib::AnimCollection::LoadOld(std::istream& is) { LoadInternal(is, true); }
+void alib::AnimCollection::LoadOld(std::istream& is)
+{
+	LoadInternal(is, true);
+}
 
 void alib::AnimCollection::Load(std::istream& is)
 {
@@ -2021,11 +2404,11 @@ void alib::AnimCollection::Load(std::istream& is)
 	boost::to_lower(magic);
 	if (magic == "acp1")
 	{
-		streamsource ss{is};
+		streamsource             ss{is};
 		decompress_bypass_source dbs{6, ss};
-		LoadPacked(6,dbs);
-		//auto dbg = dbs.mapx.size();
-		//std::cout << dbg << std::endl;
+		LoadPacked(6, dbs);
+		// auto dbg = dbs.mapx.size();
+		// std::cout << dbg << std::endl;
 	}
 	else if (magic == "ac_2")
 	{
@@ -2075,34 +2458,36 @@ std::vector<std::string> alib::AnimCollection::AllNames() const
 
 void alib::AnimReflection::draw(sf::RenderTarget& rt, sf::RenderStates st) const
 {
-	auto tr = this->getTransform();
+	auto       tr = this->getTransform();
 	sf::Sprite spr;
-	Pos hot;
+	Pos        hot;
 	if (ba)
 	{
 		auto& tex = ba->Get(current, hue);
-		hot = ba->Hot(current);
+		hot       = ba->Hot(current);
 		spr.setTexture(tex);
 	}
 	else if (cis)
 	{
 		auto& tex = cis->Get(hue);
-		hot = cis->Hot();
+		hot       = cis->Hot();
 		spr.setTexture(tex);
 	}
 	spr.setOrigin(hot.x, hot.y);
 	st.transform *= tr;
-	rt.draw(spr,st);
+	rt.draw(spr, st);
 }
 
 bool alib::AnimReflection::Next()
 {
-	if (!ba) return false;
+	if (!ba)
+		return false;
 	time = 0;
 	if (++current > ba->Size())
 	{
 		current = 0;
-		if (!ba->repeating) return false;
+		if (!ba->repeating)
+			return false;
 	}
 	return true;
 }
@@ -2122,15 +2507,16 @@ void alib::AnimReflection::Start()
 
 bool alib::AnimReflection::Update()
 {
-	int ii = global_clock.getElapsedTime().asMilliseconds();
+	int  ii = global_clock.getElapsedTime().asMilliseconds();
 	bool ok = Update(ii - last);
-	last = ii;
+	last    = ii;
 	return ok;
 }
 
 bool alib::AnimReflection::Update(int ms)
 {
-	if ((!ba) || (!ba->delay)) return false;
+	if ((!ba) || (!ba->delay))
+		return false;
 	time += ms;
 	while (time >= ba->delay)
 	{
@@ -2141,44 +2527,78 @@ bool alib::AnimReflection::Update(int ms)
 	{
 		loopcnt += (current / ba->Size());
 		current %= ba->Size();
-		if (!ba->repeating) return false;
+		if (!ba->repeating)
+			return false;
 	}
 	return true;
 }
 
 void alib::AnimReflection::Set(BasicAnim* b, UC h)
 {
-	clr(); ba = b; hue = h;
+	clr();
+	ba  = b;
+	hue = h;
 }
 
 void alib::AnimReflection::Set(CIS* c, UC h)
 {
-	clr(); cis = c; hue = h;
+	clr();
+	cis = c;
+	hue = h;
 }
 
-alib::AnimReflection::AnimReflection() { clr(); }
-alib::AnimReflection::AnimReflection(BasicAnim* b, UC h) { clr(); Set(b, h); }
-alib::AnimReflection::AnimReflection(CIS* c, UC h) { clr(); Set(c, h); }
+void alib::AnimReflection::Set(AnimReflection& ar)
+{
+	clr();
+	cis = ar.cis;
+	ba  = ar.ba;
+	hue = ar.hue;
+	current = 0;
+}
+
+void alib::AnimReflection::ContinueWith(const AnimReflection& ar)
+{
+	cis = ar.cis;
+	ba  = ar.ba;
+	hue = ar.hue;
+	if (ba)
+	{
+		auto n = ba->Size();
+		if (n)
+			current = current % n;
+		else
+			current = 0;
+	}
+	else
+	{
+		current = 0;
+	}
+}
+
+alib::AnimReflection::AnimReflection()
+{
+	clr();
+}
+alib::AnimReflection::AnimReflection(BasicAnim* b, UC h)
+{
+	clr();
+	Set(b, h);
+}
+alib::AnimReflection::AnimReflection(CIS* c, UC h)
+{
+	clr();
+	Set(c, h);
+}
 
 void alib::AnimReflection::clr()
 {
-	cis = 0; ba = 0;
-	current = time = last = loopcnt = 0;
+	cis = 0;
+	ba  = 0;
 	hue = 0;
+
+	current = time = last = loopcnt = 0;
 }
 
 #endif
 
-
 // ----------------------------------------------------------------------------
-
-// ***************
-// *** Commons ***
-// ***************
-
-void alib::CIS::Load(const std::string& fn) { std::ifstream ifs{fn, std::fstream::binary}; Load(ifs); }
-void alib::BA:: Load(const std::string& fn) { std::ifstream ifs{fn, std::fstream::binary}; Load(ifs); }
-void alib::AD:: Load(const std::string& fn) { std::ifstream ifs{fn, std::fstream::binary}; Load(ifs); }
-void alib::AC:: Load(const std::string& fn) { std::ifstream ifs{fn, std::fstream::binary}; Load(ifs); }
-
-

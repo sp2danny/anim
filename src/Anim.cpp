@@ -5,6 +5,8 @@
 
 #include <cassert>
 
+#include <boost/algorithm/string.hpp>
+
 template <class C>
 constexpr auto ssize(const C& c) -> int
 {
@@ -2072,10 +2074,11 @@ auto Anim::NAV::Refl(short dir, UC hue)
 
 bool Anim::AnimCollection::LoadExt(std::string fn)
 {
-	std::string ext = ExtractFileExt(fn);
+	std::string ext = boost::to_lower_copy(ExtractFileExt(fn));
+
 	if (ext == "ac")
 	{
-		std::cout << "loading file " << fn << " ext " << ext << std::endl;
+		//std::cout << "loading file " << fn << " ext " << ext << std::endl;
 		std::ifstream ifs(fn, std::ios::in|std::ios::binary);
 		Load(ifs);
 		return true;
