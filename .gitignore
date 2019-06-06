@@ -3,11 +3,12 @@
 bin
 .clang
 .codelite
-anim.mk
+*.mk
 Makefile
-anim.txt
+*.txt
 .vs
 TGUI-0.8
 TGUI-0.8.5
 src/lzma
-
+lib
+.build-*

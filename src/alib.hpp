@@ -321,6 +321,7 @@ struct AnimReflection : sf::Drawable, sf::Transformable
 	void Set(BasicAnim*, UC);
 	void Set(CIS*, UC);
 	void Set(AnimReflection& ar);
+	void Set(AnimReflection&& ar) {Set(ar);}
 	void ContinueWith(const AnimReflection& ar);
 
 	AnimReflection();

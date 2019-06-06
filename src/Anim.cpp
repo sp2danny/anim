@@ -1944,13 +1944,16 @@ void Anim::AnimDir::Mirror()
 std::string ExtractFileNameOnly(std::string fn)
 {
 	auto p1 = fn.find_last_of("/\\");
-	if (p1==std::string::npos) p1=0;
+	if (p1==std::string::npos)
+		p1=0;
+	else
+		++p1;
 	auto p2 = fn.find_last_of(".");
 	if (p2<p1) p2 = std::string::npos;
 	if (p2==std::string::npos)
-		return fn.substr(p1+1);
+		return fn.substr(p1);
 	else
-		return fn.substr(p1+1, p2-p1);
+		return fn.substr(p1, p2-p1);
 }
 
 bool Anim::NAV::LoadExt(std::string fn)

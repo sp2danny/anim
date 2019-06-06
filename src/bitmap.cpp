@@ -12,7 +12,7 @@ using namespace alib;
 #pragma pack(push, 1)
 
 typedef struct {
-	unsigned short     bfType;
+	char               bfType[2];
 	unsigned long      bfSize;
 	unsigned short     bfReserved1;
 	unsigned short     bfReserved2;
@@ -50,7 +50,8 @@ void alib::LoadBMP(RGB_Image& img, std::istream& in)
 	BITMAPFILEHEADER fh;
 	in.read((char*)&fh, fhsz);
 
-	assert(fh.bfType == 'MB');
+	assert(fh.bfType[0] == 'B');
+	assert(fh.bfType[1] == 'M');
 
 	BITMAPINFOHEADER ih;
 	in.read((char*)&ih, ihsz);
@@ -99,7 +100,8 @@ void alib::SaveBMP(const RGB_Image& img, std::ostream& out)
 	BITMAPINFOHEADER ih;
 
 	fh.bfSize = sizeof(fh) + sizeof(ih);
-	fh.bfType = ('M' << 8) | 'B';
+	fh.bfType[0] = 'B';
+	fh.bfType[1] = 'M';
 	fh.bfReserved1 = fh.bfReserved2 = 0;
 	fh.bfOffBits = sizeof(fh) + sizeof(ih);
 

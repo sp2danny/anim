@@ -6,9 +6,12 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
-#include <filesystem>
 
-namespace fs = std::filesystem;
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
+// #include <filesystem>
+// namespace fs = std::filesystem;
 
 #ifndef NO_SFML
 #include <SFML/Graphics.hpp>
@@ -20,6 +23,12 @@ namespace fs = std::filesystem;
 #include "bitmap.hpp"
 #include "alib.hpp"
 #include "bitstream.hpp"
+
+template<typename Cont>
+int ssize(const Cont& cont)
+{
+	return (int)cont.size();
+}
 
 alib::RGBA alib::HSVA_2_RGBA(const HSVA& hsv)
 {
@@ -153,7 +162,7 @@ static std::string ExtractFileExt(std::string fn)
 	return ret;
 }
 
-static std::string ExtractFileBase(std::string fn)
+/*static std::string ExtractFileBase(std::string fn)
 {
 	auto p = fn.find_last_of('.');
 	if (p == std::string::npos)
@@ -161,7 +170,7 @@ static std::string ExtractFileBase(std::string fn)
 	std::string ret = fn.substr(0, p);
 	// for( char& c : ret ) c=tolower(c);
 	return ret;
-}
+}*/
 
 // ----------------------------------------------------------------------------
 
@@ -493,7 +502,7 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 
 	int i, sz = w * h;
 
-	assert(pixeltypes.size() == sz);
+	assert(ssize(pixeltypes) == sz);
 
 	for (i = 0; i < sz; ++i)
 	{
@@ -517,7 +526,7 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 
 	// trg.put(0, (sz * 2) % dep);
 
-	assert(pixels.size() == sz);
+	assert(ssize(pixels) == sz);
 	for (i = 0; i < sz; ++i)
 	{
 		HSVA p = pixels[i];
@@ -562,7 +571,7 @@ void PixTypeSave(int w, int h, const char* lead, int ii, const std::vector<CIS::
 	img.w = w;
 	img.h = h;
 	int i, n = w * h;
-	assert(n == pts.size());
+	assert(n == ssize(pts));
 	img.pix.reserve(n);
 	for (int y = 0; y < h; ++y)
 		for (int x = 0; x < w; ++x)
@@ -621,7 +630,7 @@ void alib::CIS::SavePacked(UC dep, compress_bypass_target& trg) const
 
 	int sz = w * h;
 
-	assert(pixeltypes.size() == sz);
+	assert(ssize(pixeltypes) == sz);
 
 	struct Item
 	{
@@ -2206,9 +2215,10 @@ bool alib::NAV::LoadPacked(UC dep, decompress_bypass_source& src)
 // *** AnimCollection ***
 // **********************
 
+extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
+
 bool alib::AnimCollection::Load(const std::string& fn)
 {
-	extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
 
 	std::string ext = boost::to_lower_copy(ExtractFileExt(fn));
 

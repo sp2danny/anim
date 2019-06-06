@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="anim" InternalType="Console" Version="10.0.0">
+<CodeLite_Project Name="aview" InternalType="Console" Version="10.0.0">
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
@@ -8,25 +8,6 @@
     <File Name="src/Anim.h"/>
     <File Name="src/back.cpp"/>
     <File Name="src/back.h"/>
-    <VirtualDirectory Name="alib">
-      <File Name="src/alib.cpp"/>
-      <File Name="src/alib.hpp"/>
-      <File Name="src/aLibFast.cpp"/>
-      <File Name="src/bitmap.cpp"/>
-      <File Name="src/bitmap.hpp"/>
-      <File Name="src/bitstream.cpp"/>
-      <File Name="src/bitstream.hpp"/>
-      <File Name="src/core.hpp"/>
-      <File Name="src/inireader.cpp"/>
-      <File Name="src/inireader.hpp"/>
-      <File Name="src/lzma.cpp"/>
-      <File Name="src/lzv.cpp"/>
-      <File Name="src/lzv.hpp"/>
-      <File Name="src/pcxLoad.cpp"/>
-      <File Name="src/sbct.cpp"/>
-      <File Name="src/tokenmap.cpp"/>
-      <File Name="src/tokenmap.hpp"/>
-    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -51,7 +32,11 @@
       <Compiler Options="-g;-O0" C_Options="-g;-O0" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
       </Compiler>
-      <Linker Options="" Required="yes"/>
+      <Linker Options="" Required="yes">
+        <LibraryPath Value="lib"/>
+        <Library Value="alib-d"/>
+        <Library Value="stdc++fs"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="./$(ProjectName)_dbg.out" IntermediateDirectory="./bin/Debug" Command="./$(ProjectName)_dbg.out" CommandArguments="horseman.ac" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="." PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="Default"/>
@@ -91,7 +76,11 @@
         <IncludePath Value="."/>
         <Preprocessor Value="NDEBUG"/>
       </Compiler>
-      <Linker Options="" Required="yes"/>
+      <Linker Options="" Required="yes">
+        <LibraryPath Value="lib"/>
+        <Library Value="alib"/>
+        <Library Value="stdc++fs"/>
+      </Linker>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="./$(ProjectName).out" IntermediateDirectory="./bin/Release" Command="./$(ProjectName).out" CommandArguments="horseman.ac" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="." PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="Default"/>
