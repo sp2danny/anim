@@ -15,6 +15,7 @@
     <ProjectGuid>{D2EA66C7-BC1A-4F5D-9217-495130042E31}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>aview</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -49,7 +50,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST;src/lzma/include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
       <PreprocessorDefinitions>SFML_STATIC;WINDOWS;_DEBUG</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -68,6 +69,10 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <PreprocessorDefinitions>SFML_STATIC;WINDOWS;NDEBUG</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <BufferSecurityCheck />
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <AdditionalDependencies>winmm.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -78,32 +83,15 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\alib.cpp" />
-    <ClCompile Include="src\aLibFast.cpp" />
     <ClCompile Include="src\Anim.cpp" />
     <ClCompile Include="src\back.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\bitmap.cpp" />
-    <ClCompile Include="src\bitstream.cpp" />
-    <ClCompile Include="src\inireader.cpp" />
-    <ClCompile Include="src\lzma.cpp" />
-    <ClCompile Include="src\lzv.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\pcxLoad.cpp" />
-    <ClCompile Include="src\sbct.cpp" />
-    <ClCompile Include="src\tokenmap.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\alib.hpp" />
     <ClInclude Include="src\Anim.h" />
     <ClInclude Include="src\back.h" />
-    <ClInclude Include="src\bitmap.hpp" />
-    <ClInclude Include="src\bitstream.hpp" />
-    <ClInclude Include="src\core.hpp" />
-    <ClInclude Include="src\inireader.hpp" />
-    <ClInclude Include="src\lzv.hpp" />
-    <ClInclude Include="src\tokenmap.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\SFML\lib\freetype.lib" />
@@ -132,6 +120,11 @@
     <Library Include="TGUI-0.8\lib\tgui-s.lib">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="alib.vcxproj">
+      <Project>{50006941-20bf-47a7-ac81-7a935d06f34a}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
