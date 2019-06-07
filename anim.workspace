@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="anim" Database="/home/sp2danny/extra/.codelite/anim.tags" Version="10.0.0">
-  <Project Name="aview" Path="aview.project" Active="Yes"/>
-  <Project Name="alib" Path="alib.project" Active="No"/>
+  <Project Name="aview" Path="aview.project" Active="No"/>
+  <Project Name="alib" Path="alib.project" Active="Yes"/>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="no">
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="aview" ConfigName="Debug"/>
       <Project Name="alib" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="yes">
+    <WorkspaceConfiguration Name="Release" Selected="no">
       <Environment/>
       <Project Name="aview" ConfigName="Release"/>
       <Project Name="alib" ConfigName="Release"/>

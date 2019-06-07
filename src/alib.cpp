@@ -189,19 +189,28 @@ bool alib::CIS::Load(const std::string& fn)
 		Load(ifs);
 		return true;
 	}
-	// else if(ext=="bmp")
-	//{
-	//	SDL_Surface* srf = SDL_LoadBMP(fn.c_str());
-	//	if(!srf) return false;
-	//	SDL_Surface* tm = MakeTransMaskFromImage(srf);
-	//	FromImg(srf,tm,0,0);
-	//	return true;
-	//}
-	// else if(ext=="pcx")
-	//{
-	//	LoadPCX(fn.c_str());
-	//	return true;
-	//}
+	else if(ext=="bmp")
+	{
+		RGB_Image     img;
+		std::ifstream ifs{fn, std::fstream::binary | std::fstream::in};
+		alib::LoadBMP(img, ifs);
+
+		hot = {0,0};
+		has_dither = has_trans = has_colimp = false;
+		loaded = true;
+		depth = 8;
+		
+		w = img.w; h = img.h;
+		int sz = w*h;
+		pixeltypes.assign(sz, normal);
+		pixels.resize(sz);
+		for (int i=0; i<sz; ++i)
+		{
+			HSV hsv = RGB_2_HSV(img.pix[i]);
+			pixels[i] = {hsv.h, hsv.s, hsv.v, 255};
+		}
+		return true;
+	}
 	return false;
 }
 
@@ -1956,17 +1965,20 @@ void alib::AnimDir::Mirror()
 // *** NAV ***
 // ***********
 
-extern std::string ExtractFileNameOnly(std::string fn);
-/*{
+static std::string ExtractFileNameOnly(std::string fn)
+{
 	auto p1 = fn.find_last_of("/\\");
-	if (p1 == std::string::npos) p1 = 0;
+	if (p1 == std::string::npos)
+		p1 = 0;
+	else
+		++p1;
 	auto p2 = fn.find_last_of(".");
 	if (p2 < p1) p2 = std::string::npos;
 	if (p2 == std::string::npos)
-		return fn.substr(p1 + 1);
+		return fn.substr(p1);
 	else
-		return fn.substr(p1 + 1, p2 - p1);
-}*/
+		return fn.substr(p1, p2 - p1);
+}
 
 bool alib::NAV::Load(const std::string& fn)
 {

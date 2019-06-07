@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <cstdint>
 
 #include "bitmap.hpp"
 
@@ -12,25 +13,25 @@ using namespace alib;
 #pragma pack(push, 1)
 
 typedef struct {
-	char               bfType[2];
-	unsigned long      bfSize;
-	unsigned short     bfReserved1;
-	unsigned short     bfReserved2;
-	unsigned long      bfOffBits;
+	char              bfType[2];
+	std::uint32_t     bfSize;
+	std::uint16_t     bfReserved1;
+	std::uint16_t     bfReserved2;
+	std::uint32_t     bfOffBits;
 } BITMAPFILEHEADER;
 
 typedef struct {
-	unsigned long      biSize;
-	signed long        biWidth;
-	signed long        biHeight;
-	unsigned short     biPlanes;
-	unsigned short     biBitCount;
-	unsigned long      biCompression;
-	unsigned long      biSizeImage;
-	signed long        biXPelsPerMeter;
-	signed long        biYPelsPerMeter;
-	unsigned long      biClrUsed;
-	unsigned long      biClrImportant;
+	std::uint32_t     biSize;
+	std::int32_t      biWidth;
+	std::int32_t      biHeight;
+	std::uint16_t     biPlanes;
+	std::uint16_t     biBitCount;
+	std::uint32_t     biCompression;
+	std::uint32_t     biSizeImage;
+	std::int32_t      biXPelsPerMeter;
+	std::uint32_t     biYPelsPerMeter;
+	std::uint32_t     biClrUsed;
+	std::uint32_t     biClrImportant;
 } BITMAPINFOHEADER;
 
 #pragma pack(pop)
@@ -84,8 +85,12 @@ void alib::LoadBMP(RGB_Image& img, std::istream& in)
 				std::cerr << std::boolalpha << "fail " << in.fail() << std::endl;
 				std::cerr << std::boolalpha << "eof  " << in.eof()  << std::endl;
 			}
-			in.read( (char*)&rgb, 3 );
-			assert( in && (in.gcount()==3) );
+			in.read((char*)&rgb.b, 1);
+			//assert(in && (in.gcount()==1));
+			in.read((char*)&rgb.g, 1);
+			//assert(in && (in.gcount()==1));
+			in.read((char*)&rgb.r, 1);
+			//assert(in && (in.gcount()==1));
 			img.pix[x+y*w] = rgb;
 		}
 		if (padding)
