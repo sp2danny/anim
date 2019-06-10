@@ -18,8 +18,6 @@
 #include <boost/format.hpp>
 //#include <fmt/format.h>
 
-#define NO_SFML
-
 #include "alib.hpp"
 #include "bitstream.hpp"
 #include "inireader.hpp"
@@ -34,19 +32,22 @@ namespace fs = std::experimental::filesystem;
 extern bool LZMACompress(const BVec& inBuf, BVec& outBuf, UL preset);
 extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
 
-struct ACN {
+struct ACN
+{
 	string name;
-	AC ac;
+	AC     ac;
 };
 
-struct ADN {
+struct ADN
+{
 	string name;
-	AD ad;
+	AD     ad;
 };
 
-struct BAN {
+struct BAN
+{
 	string name;
-	BA ba;
+	BA     ba;
 };
 
 vector<ACN> acns;
@@ -76,27 +77,22 @@ std::string_view filenameonly(std::string_view sv)
 		case '.':
 			ut = p;
 			break;
-		default:
-			;
+		default:;
 		}
 	}
-	if (ut < in) ut = end;
+	if (ut < in)
+		ut = end;
 	std::string_view ret(&*in, ut - in);
 	return ret;
 }
 
 void exec_fastunzip(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: fastunzip [AC|AD|BA] <path>" << endl;
-	};
-	auto fail = []() -> void
-	{
-		cerr << "fastunzip: operation failed" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: fastunzip [AC|AD|BA] <path>" << endl; };
+	auto fail  = []() -> void { cerr << "fastunzip: operation failed" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 
 	to_upper(toks[1]);
 	/**/ if (toks[1] == "AC")
@@ -104,22 +100,25 @@ void exec_fastunzip(vector<string> toks)
 		fs::path fn = toks[2];
 		if (!fs::exists(fn))
 			return usage();
-		auto t1 = chrono::high_resolution_clock::now();
+		auto     t1 = chrono::high_resolution_clock::now();
 		ifstream ifs{fn, fstream::binary};
-		UL sz = (UL)fs::file_size(fn);
-		BVec v1,v2; v1.resize(sz);
+		UL       sz = (UL)fs::file_size(fn);
+		BVec     v1, v2;
+		v1.resize(sz);
 		ifs.read((char*)v1.data(), sz);
-		bool ok = LZMADecompress(v1,v2);
-		if (!ok) return fail();
+		bool ok = LZMADecompress(v1, v2);
+		if (!ok)
+			return fail();
 		ACN acn;
 		acn.name = fn.filename().replace_extension("").string();
-		ok = acn.ac.LoadFast(v2);
-		if (!ok) return fail();
-		auto t2 = chrono::high_resolution_clock::now();
+		ok       = acn.ac.LoadFast(v2);
+		if (!ok)
+			return fail();
+		auto t2  = chrono::high_resolution_clock::now();
 		auto dur = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
-		UL i = (UL)acns.size();
+		UL   i   = (UL)acns.size();
 		cout << "\t[" << i << "] " << acn.name << " (" << dur.count() << " ms)\n";
-		acns.push_back( std::move(acn) );
+		acns.push_back(std::move(acn));
 	}
 	else
 		return usage();
@@ -127,40 +126,32 @@ void exec_fastunzip(vector<string> toks)
 
 void exec_fastzip(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: fastzip [AC|AD|BA] # <path>" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "fastzip: id not found" << endl;
-	};
-	auto fail = []() -> void
-	{
-		cerr << "fastzip: operation failed" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: fastzip [AC|AD|BA] # <path>" << endl; };
+	auto count = []() -> void { cerr << "fastzip: id not found" << endl; };
+	auto fail  = []() -> void { cerr << "fastzip: operation failed" << endl; };
 
-	if (toks.size() != 4) return usage();
+	if (toks.size() != 4)
+		return usage();
 
 	to_upper(toks[1]);
 	/**/ if (toks[1] == "AC")
 	{
-		if (toks[2]=="*")
-		{
-		}
+		if (toks[2] == "*") {}
 		else
 		{
 			size_t i = stoi(toks[2]);
 			size_t n = acns.size();
-			if (i >= n) return count();
+			if (i >= n)
+				return count();
 			ACN& acn = acns[i];
-			BVec v1,v2;
+			BVec v1, v2;
 			auto t1 = chrono::high_resolution_clock::now();
 			acn.ac.SaveFast(v1);
-			bool ok = LZMACompress(v1, v2, 5);
-			auto t2 = chrono::high_resolution_clock::now();
-			auto dur = chrono::duration_cast<chrono::milliseconds>(t2-t1);
-			if (!ok) return fail();
+			bool ok  = LZMACompress(v1, v2, 5);
+			auto t2  = chrono::high_resolution_clock::now();
+			auto dur = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
+			if (!ok)
+				return fail();
 			fs::path name = toks[3];
 			if (fs::is_directory(name))
 			{
@@ -168,8 +159,9 @@ void exec_fastzip(vector<string> toks)
 				name = name.replace_extension(".fzac");
 			}
 			ofstream ofs{name, fstream::binary};
-			if (!ofs) return fail();
-			ofs.write( (char*)v2.data(), v2.size() );
+			if (!ofs)
+				return fail();
+			ofs.write((char*)v2.data(), v2.size());
 			cout << "wrote " << name << " in " << dur.count() << " ms\n";
 		}
 	}
@@ -179,18 +171,18 @@ void exec_fastzip(vector<string> toks)
 
 void exec_makefast(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: makefast <src> <dst>" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: makefast <src> <dst>" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 
 	fs::path src = toks[1];
 	fs::path dst = toks[2];
 
-	if (!fs::is_directory(src)) return usage();
-	if (!fs::is_directory(dst)) return usage();
+	if (!fs::is_directory(src))
+		return usage();
+	if (!fs::is_directory(dst))
+		return usage();
 
 	fs::directory_iterator di{src};
 	for (auto&& d : di)
@@ -201,7 +193,7 @@ void exec_makefast(vector<string> toks)
 			to_lower(ext);
 			if (ext == ".ac")
 			{
-				auto fn = d.path().filename();
+				auto fn  = d.path().filename();
 				auto sfn = dst / fn.replace_extension(".fac");
 				if (!fs::exists(sfn))
 				{
@@ -209,85 +201,82 @@ void exec_makefast(vector<string> toks)
 					ac.Load(d.path().string());
 					ac.SaveFast(sfn.string());
 					cout << "processed " << fn.replace_extension("") << endl;
-				} else {
+				}
+				else
+				{
 					cout << "skipped " << fn.replace_extension("") << endl;
 				}
 			}
 		}
 	}
-
 }
 
 void exec_loadfast(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: loadfast [AC|AD|BA] <path>" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: loadfast [AC|AD|BA] <path>" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 
 	boost::to_upper(toks[1]);
 
 	/**/ if (toks[1] == "AC")
 	{
-		ACN acn;
+		ACN      acn;
 		fs::path pth = toks[2];
 		acn.ac.LoadFast(pth.string());
 		acn.name = pth.filename().string();
-		UL i = (UL)acns.size();
+		UL i     = (UL)acns.size();
 		acns.push_back(std::move(acn));
 		cout << "\t[" << i << "] " << acn.name << endl;
 	}
 	else if (toks[1] == "BA")
 	{
-		BAN ban;
+		BAN      ban;
 		fs::path pth = toks[2];
-		UL sz = (UL)fs::file_size(pth);
-		if (!sz) return usage();
+		UL       sz  = (UL)fs::file_size(pth);
+		if (!sz)
+			return usage();
 		ifstream ifs{pth, fstream::binary};
-		BVec bv; bv.resize(sz);
+		BVec     bv;
+		bv.resize(sz);
 		UC* data = bv.data();
 		ifs.read((char*)data, sz);
-		ban.ba.LoadFast(data, data+sz);
+		ban.ba.LoadFast(data, data + sz);
 		ban.name = pth.filename().string();
-		UL i = (UL)bans.size();
+		UL i     = (UL)bans.size();
 		bans.push_back(std::move(ban));
 		cout << "\t[" << i << "] " << ban.name << endl;
 	}
 	else if (toks[1] == "AD")
 	{
-		ADN adn;
+		ADN      adn;
 		fs::path pth = toks[2];
-		UL sz = (UL)fs::file_size(pth);
-		if (!sz) return usage();
+		UL       sz  = (UL)fs::file_size(pth);
+		if (!sz)
+			return usage();
 		ifstream ifs{pth, fstream::binary};
-		BVec bv; bv.resize(sz);
+		BVec     bv;
+		bv.resize(sz);
 		UC* data = bv.data();
 		ifs.read((char*)data, sz);
-		adn.ad.LoadFast(data, data+sz);
+		adn.ad.LoadFast(data, data + sz);
 		adn.name = pth.filename().replace_extension().string();
-		UL i = (UL)acns.size();
+		UL i     = (UL)acns.size();
 		cout << "\t[" << i << "] " << adn.name << endl;
 		adns.push_back(std::move(adn));
 	}
 	else
 		usage();
-
 }
 
 void exec_savefast(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: savefast [AC|AD|BA] # <dest>" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "savefast: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: savefast [AC|AD|BA] # <dest>" << endl; };
+	auto count = []() -> void { cerr << "savefast: id not found" << endl; };
 
-	if (toks.size() != 4) return usage();
+	if (toks.size() != 4)
+		return usage();
 
 	boost::to_upper(toks[1]);
 
@@ -301,7 +290,9 @@ void exec_savefast(vector<string> toks)
 			UL i, n = (UL)acns.size();
 			for (i = 0; i < n; ++i)
 			{
-				fs::path ofn = pth; ofn /= acns[i].name; ofn += ".fac";
+				fs::path ofn = pth;
+				ofn /= acns[i].name;
+				ofn += ".fac";
 				acns[i].ac.SaveFast(ofn.string());
 				cout << "wrote " << ofn << endl;
 			}
@@ -312,7 +303,7 @@ void exec_savefast(vector<string> toks)
 			UL n = (UL)acns.size();
 			if ((i < 0) || (i >= n))
 				return count();
-			AC& ac = acns[i].ac;
+			AC&      ac  = acns[i].ac;
 			fs::path pth = toks[3];
 			if (fs::is_directory(pth))
 			{
@@ -333,7 +324,9 @@ void exec_savefast(vector<string> toks)
 			UL i, n = (UL)bans.size();
 			for (i = 0; i < n; ++i)
 			{
-				fs::path ofn = pth; ofn /= bans[i].name; ofn += ".fba";
+				fs::path ofn = pth;
+				ofn /= bans[i].name;
+				ofn += ".fba";
 				ofstream ofs{ofn, fstream::binary};
 				bans[i].ba.SaveFast(ofs);
 				cout << "wrote " << ofn << endl;
@@ -345,7 +338,7 @@ void exec_savefast(vector<string> toks)
 			UL n = (UL)bans.size();
 			if ((i < 0) || (i >= n))
 				return count();
-			BA& ba = bans[i].ba;
+			BA&      ba  = bans[i].ba;
 			fs::path pth = toks[3];
 			if (fs::is_directory(pth))
 			{
@@ -365,9 +358,11 @@ void exec_savefast(vector<string> toks)
 			if (!fs::is_directory(pth))
 				return usage();
 			UL i, n = (UL)adns.size();
-			for (i=0; i<n; ++i)
+			for (i = 0; i < n; ++i)
 			{
-				fs::path ofn = pth; ofn /= adns[i].name; ofn += ".fad";
+				fs::path ofn = pth;
+				ofn /= adns[i].name;
+				ofn += ".fad";
 				ofstream ofs{ofn, fstream::binary};
 				adns[i].ad.SaveFast(ofs);
 				cout << "wrote " << ofn << endl;
@@ -377,9 +372,9 @@ void exec_savefast(vector<string> toks)
 		{
 			UL i = (UL)stoi(toks[2]);
 			UL n = (UL)adns.size();
-			if ((i<0) || (i>=n))
+			if ((i < 0) || (i >= n))
 				return count();
-			AD& ad = adns[i].ad;
+			AD&      ad  = adns[i].ad;
 			fs::path pth = toks[3];
 			if (fs::is_directory(pth))
 			{
@@ -393,17 +388,14 @@ void exec_savefast(vector<string> toks)
 	}
 	else
 		usage();
-
 }
 
 void exec_list(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: list [AC|AD|BA]" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: list [AC|AD|BA]" << endl; };
 
-	if (toks.size() != 2) return usage();
+	if (toks.size() != 2)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "*")
 	{
@@ -421,10 +413,11 @@ void exec_list(vector<string> toks)
 			cout << setw(25) << acns[i].name << " ";
 			cout << "(";
 			auto anims = acns[i].ac.CoreNames();
-			bool frst = true;
+			bool frst  = true;
 			for (auto&& n : anims)
 			{
-				if (!frst) cout << ",";
+				if (!frst)
+					cout << ",";
 				cout << n;
 				frst = false;
 			}
@@ -435,7 +428,7 @@ void exec_list(vector<string> toks)
 	{
 		size_t i, n = adns.size();
 		cout << n << " ADs" << endl;
-		for (i=0; i<n; ++i)
+		for (i = 0; i < n; ++i)
 		{
 			cout << "\t[" << i << "] ";
 			cout << setw(25) << adns[i].name << " ";
@@ -445,9 +438,10 @@ void exec_list(vector<string> toks)
 			bool frst = true;
 			for (short d : dirs)
 			{
-				if (!frst) cout << ",";
+				if (!frst)
+					cout << ",";
 				cout << d;
-				frst=false;
+				frst = false;
 			}
 			cout << ")" << endl;
 		}
@@ -471,26 +465,32 @@ void exec_list(vector<string> toks)
 
 void exec_load(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: load [AC|AD|BA] filename" << endl;
-	};
-	auto file = []() -> void
-	{
-		cerr << "unable to load file" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: load [AC|AD|BA] filename" << endl; };
+	auto file  = []() -> void { cerr << "unable to load file" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 	ifstream ifs{toks[2], fstream::binary};
-	if (!ifs) return file();
+	if (!ifs)
+		return file();
 	to_lower(toks[1]);
-	if (toks[1] == "ac")
+	if (toks[1] == "oac")
+	{
+		AC ac;
+		ifs.close();
+		ac.Load(toks[2]);
+		auto fno = filenameonly(toks[2]);
+		acns.push_back({+fno, std::move(ac)});
+		cout << "[" << acns.size() - 1 << "] " << fno << " " << endl;
+	}
+	else if (toks[1] == "ac")
 	{
 		AC ac;
 		ifs.seekg(4);
 		streamsource bs(ifs);
 		bool ok = ac.LBS(6, bs);
-		if (!ok) return file();
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		acns.push_back({+fno, std::move(ac)});
 		cout << "[" << acns.size() - 1 << "] " << fno << " " << endl;
@@ -500,11 +500,12 @@ void exec_load(vector<string> toks)
 		AD ad;
 		ifs.seekg(4);
 		streamsource bs(ifs);
-		bool ok = ad.LBS(6,bs);
-		if (!ok) return file();
+		bool ok = ad.LBS(6, bs);
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		adns.push_back({+fno, std::move(ad)});
-		cout << "[" << adns.size()-1 << "] "  << fno << " " << endl;
+		cout << "[" << adns.size() - 1 << "] " << fno << " " << endl;
 	}
 	else if (toks[1] == "ba")
 	{
@@ -512,7 +513,8 @@ void exec_load(vector<string> toks)
 		ifs.seekg(4);
 		streamsource bs(ifs);
 		bool ok = ba.LBS(6, bs);
-		if (!ok) return file();
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		bans.push_back({+fno, std::move(ba)});
 		cout << "[" << bans.size() - 1 << "] " << fno << " " << endl;
@@ -524,32 +526,29 @@ void exec_load(vector<string> toks)
 using DBS = decompress_bypass_source;
 using CBT = compress_bypass_target;
 
-//typedef fake_bypass_source DBS;
-//typedef fake_bypass_target CBT;
+// typedef fake_bypass_source DBS;
+// typedef fake_bypass_target CBT;
 
 void exec_load_pack(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: unpack [AC|AD|BA] filename" << endl;
-	};
-	auto file = []() -> void
-	{
-		cerr << "unable to load file" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: unpack [AC|AD|BA] filename" << endl; };
+	auto file  = []() -> void { cerr << "unable to load file" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 	ifstream ifs{toks[2], fstream::binary};
-	if (!ifs) return file();
+	if (!ifs)
+		return file();
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
 		AC ac;
 		ifs.seekg(4);
 		streamsource bs(ifs);
-		DBS dbs(6, bs);
-		bool ok = ac.LoadPacked(6, dbs);
-		if (!ok) return file();
+		DBS          dbs(6, bs);
+		bool         ok = ac.LoadPacked(6, dbs);
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		acns.push_back({+fno, std::move(ac)});
 		cout << "[" << acns.size() - 1 << "] " << fno << " " << endl;
@@ -559,9 +558,10 @@ void exec_load_pack(vector<string> toks)
 		AD ad;
 		ifs.seekg(4);
 		streamsource bs(ifs);
-		DBS dbs(6, bs);
-		bool ok = ad.LoadPacked(6, dbs);
-		if (!ok) return file();
+		DBS          dbs(6, bs);
+		bool         ok = ad.LoadPacked(6, dbs);
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		adns.push_back({+fno, std::move(ad)});
 		cout << "[" << adns.size() - 1 << "] " << fno << " " << endl;
@@ -571,9 +571,10 @@ void exec_load_pack(vector<string> toks)
 		BA ba;
 		ifs.seekg(4);
 		streamsource bs(ifs);
-		DBS dbs(6, bs);
-		bool ok = ba.LoadPacked(6, dbs);
-		if (!ok) return file();
+		DBS          dbs(6, bs);
+		bool         ok = ba.LoadPacked(6, dbs);
+		if (!ok)
+			return file();
 		auto fno = filenameonly(toks[2]);
 		bans.push_back({+fno, std::move(ba)});
 		cout << "[" << bans.size() - 1 << "] " << fno << " " << endl;
@@ -582,99 +583,106 @@ void exec_load_pack(vector<string> toks)
 		usage();
 }
 
-
 void exec_extr(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: extract [AC|AD|BA] #" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "extract: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: extract [AC|AD|BA] #" << endl; };
+	auto count = []() -> void { cerr << "extract: id not found" << endl; };
 
-	if (toks.size() < 3) return usage();
+	if (toks.size() < 3)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
-		if (toks.size() != 3) return usage();
+		if (toks.size() != 3)
+			return usage();
 		size_t i = stoi(toks[2]);
 		size_t n = acns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		ACN& acn = acns[i];
 		cout << "extracting " << acn.name << endl;
 		auto anims = acn.ac.CoreNames();
 		for (auto n : anims)
 		{
 			NAV& nav = acn.ac.Get(n);
-			int i2, n2=nav.Count();
+			int  i2, n2 = nav.Count();
 			for (i2 = 0; i2 < n2; ++i2)
 			{
-				AD& ad = nav.Get(i2);
+				AD&    ad   = nav.Get(i2);
 				string name = acn.name + "-" + n;
-				if (n2>1) name += "-" + to_string(i2);
-				adns.push_back( {name, ad} );
+				if (n2 > 1)
+					name += "-" + to_string(i2);
+				adns.push_back({name, ad});
 				cout << "\t[" << adns.size() - 1 << "] " << name << " " << endl;
 			}
 		}
 	}
 	else if (toks[1] == "ad")
 	{
-		if (toks.size() != 3) return usage();
+		if (toks.size() != 3)
+			return usage();
 		size_t i = stoi(toks[2]);
 		size_t n = adns.size();
-		if (i>=n) return count();
+		if (i >= n)
+			return count();
 		ADN& adn = adns[i];
 		cout << "extracting " << adn.name << endl;
 		auto dirs = adn.ad.AllDirs();
 		sort(dirs.begin(), dirs.end());
 		for (auto d : dirs)
 		{
-			BA& ba = adn.ad.Get(d);
+			BA&    ba   = adn.ad.Get(d);
 			string name = adn.name;
-			if (dirs.size() > 1) { name += "-" + to_string(d); }
+			if (dirs.size() > 1)
+			{
+				name += "-" + to_string(d);
+			}
 			bans.push_back({name, ba});
 			cout << "\t[" << bans.size() - 1 << "] " << name << " " << endl;
 		}
 	}
 	else if (toks[1] == "ba")
 	{
-		auto usage = []() -> void
-		{
-			cerr << "usage: extract BA # <dir> [BMP|CIS] #digits" << endl;
-		};
-		if (toks.size() != 6) return usage();
-		size_t i,n;
+		auto usage = []() -> void { cerr << "usage: extract BA # <dir> [BMP|CIS] #digits" << endl; };
+		if (toks.size() != 6)
+			return usage();
+		size_t i, n;
 		i = stoi(toks[2]);
 		n = bans.size();
-		if (i>=n) return count();
+		if (i >= n)
+			return count();
 		fs::path fn = toks[3];
-		if (!fs::exists(fn)) return usage();
+		if (!fs::exists(fn))
+			return usage();
 		bool docis;
 		to_lower(toks[4]);
-		/**/ if (toks[4] == "bmp") docis = false;
-		else if (toks[4] == "cis") docis = true;
-		else return usage();
-		int dig = stoi(toks[5]);
+		/**/ if (toks[4] == "bmp")
+			docis = false;
+		else if (toks[4] == "cis")
+			docis = true;
+		else
+			return usage();
+		int  dig = stoi(toks[5]);
 		BAN& ban = bans[i];
-		n = ban.ba.Size();
+		n        = ban.ba.Size();
 		for (i = 0; i < n; ++i)
 		{
-			CIS& cis = ban.ba.Get((int)i);
+			CIS&         cis = ban.ba.Get((int)i);
 			stringstream ss;
 			ss << (fn / ban.name) << "-" << setw(dig) << setfill('0') << i;
 			if (docis)
 			{
-				string ofn = ss.str() + ".cis";
+				string   ofn = ss.str() + ".cis";
 				ofstream ofs{ofn, fstream::binary};
 				ofs.write("cis3", 4);
 				streamtarget st(ofs);
 				cis.SBT(6, st);
 				st.done();
-			} else {
+			}
+			else
+			{
 				string ofn = ss.str() + ".bmp";
-				cis.SaveBMP( ofn.c_str() , 0, {255,0,255} );
+				cis.SaveBMP(ofn.c_str(), 0, {255, 0, 255});
 			}
 		}
 		cout << "extracted " << n << " items" << endl;
@@ -685,32 +693,27 @@ void exec_extr(vector<string> toks)
 
 void exec_save(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: save [AC|AD|BA] # filename" << endl;
-	};
-	auto file = []() -> void
-	{
-		cerr << "unable to save file" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "save: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: save [AC|AD|BA] # filename" << endl; };
+	auto file  = []() -> void { cerr << "unable to save file" << endl; };
+	auto count = []() -> void { cerr << "save: id not found" << endl; };
 
-	if (toks.size() != 4) return usage();
+	if (toks.size() != 4)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = acns.size();
-		if (i>=n) return count();
+		if (i >= n)
+			return count();
 		ACN& acn = acns[i];
 
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= acn.name + ".ac";
+		if (fs::is_directory(name))
+			name /= acn.name + ".ac";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
+		if (!ofs)
+			return file();
 
 		ofs.write("AC_3", 4);
 		streamtarget st(ofs);
@@ -722,13 +725,16 @@ void exec_save(vector<string> toks)
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = adns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		ADN& adn = adns[i];
 
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= adn.name + ".ad";
+		if (fs::is_directory(name))
+			name /= adn.name + ".ad";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
+		if (!ofs)
+			return file();
 
 		ofs.write("AD_3", 4);
 		streamtarget st(ofs);
@@ -740,13 +746,16 @@ void exec_save(vector<string> toks)
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = bans.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		BAN& ban = bans[i];
 
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= ban.name + ".ba";
+		if (fs::is_directory(name))
+			name /= ban.name + ".ba";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
+		if (!ofs)
+			return file();
 
 		ofs.write("BA_3", 4);
 		streamtarget st(ofs);
@@ -760,36 +769,31 @@ void exec_save(vector<string> toks)
 
 void exec_save_pack(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: pack [AC|AD|BA] # filename" << endl;
-	};
-	auto file = []() -> void
-	{
-		cerr << "unable to save file" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "save: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: pack [AC|AD|BA] # filename" << endl; };
+	auto file  = []() -> void { cerr << "unable to save file" << endl; };
+	auto count = []() -> void { cerr << "save: id not found" << endl; };
 
-	if (toks.size() != 4) return usage();
+	if (toks.size() != 4)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = acns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		ACN& acn = acns[i];
-		
+
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= acn.name + ".pac";
+		if (fs::is_directory(name))
+			name /= acn.name + ".pac";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
-		
+		if (!ofs)
+			return file();
+
 		ofs.write("ACP1", 4);
 		streamtarget st(ofs);
-		CBT cbt(6, st);
+		CBT          cbt(6, st);
 		acn.ac.SavePacked(6, cbt);
 		cbt.done();
 		cout << "wrote " << name << endl;
@@ -798,18 +802,21 @@ void exec_save_pack(vector<string> toks)
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = adns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		ADN& adn = adns[i];
-		
+
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= adn.name + ".pad";
+		if (fs::is_directory(name))
+			name /= adn.name + ".pad";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
-		
+		if (!ofs)
+			return file();
+
 		ofs.write("ADP1", 4);
 
 		streamtarget st(ofs);
-		CBT cbt(6, st);
+		CBT          cbt(6, st);
 		adn.ad.SavePacked(6, cbt);
 		cbt.done();
 		cout << "wrote " << name << endl;
@@ -818,17 +825,20 @@ void exec_save_pack(vector<string> toks)
 	{
 		size_t i = stoi(toks[2]);
 		size_t n = bans.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		BAN& ban = bans[i];
 
 		fs::path name = toks[3];
-		if (fs::is_directory(name)) name /= ban.name + ".pba";
+		if (fs::is_directory(name))
+			name /= ban.name + ".pba";
 		ofstream ofs{name, fstream::binary};
-		if (!ofs) return file();
+		if (!ofs)
+			return file();
 
 		ofs.write("BAP1", 4);
 		streamtarget st(ofs);
-		CBT cbt(6, st);
+		CBT          cbt(6, st);
 		ban.ba.SavePacked(6, cbt);
 		cbt.done();
 		cout << "wrote " << name << endl;
@@ -837,32 +847,29 @@ void exec_save_pack(vector<string> toks)
 		usage();
 }
 
-
 void exec_saveall(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: save* [AC|AD|BA] <path>" << endl;
-	};
-	auto file = []() -> void
-	{
-		cerr << "unable to save file" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: save* [AC|AD|BA] <path>" << endl; };
+	auto file  = []() -> void { cerr << "unable to save file" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 	to_lower(toks[1]);
 	fs::path dir = toks[2];
-	if (!fs::exists(dir)) return file();
-	if (!fs::is_directory(dir)) return file();
+	if (!fs::exists(dir))
+		return file();
+	if (!fs::is_directory(dir))
+		return file();
 	if (toks[1] == "ac")
 	{
-		size_t i,n = acns.size();
+		size_t i, n = acns.size();
 		for (i = 0; i < n; ++i)
 		{
 			auto name = dir / acns[i].name;
 			name += ".ac"s;
 			ofstream ofs{name, fstream::binary};
-			if (!ofs) return file();
+			if (!ofs)
+				return file();
 			ofs.write("AC_3", 4);
 			streamtarget st(ofs);
 			acns[i].ac.SBT(6, st);
@@ -878,7 +885,8 @@ void exec_saveall(vector<string> toks)
 			auto name = dir / adns[i].name;
 			name += ".ad"s;
 			ofstream ofs{name, fstream::binary};
-			if (!ofs) return file();
+			if (!ofs)
+				return file();
 			ofs.write("AD_3", 4);
 			streamtarget st(ofs);
 			adns[i].ad.SBT(6, st);
@@ -894,7 +902,8 @@ void exec_saveall(vector<string> toks)
 			auto name = dir / bans[i].name;
 			name += ".ba"s;
 			ofstream ofs{name, fstream::binary};
-			if (!ofs) return file();
+			if (!ofs)
+				return file();
 			ofs.write("BA_3", 4);
 			streamtarget st(ofs);
 			bans[i].ba.SBT(6, st);
@@ -908,19 +917,17 @@ void exec_saveall(vector<string> toks)
 
 void exec_new(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: new [AC|AD|BA] name" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: new [AC|AD|BA] name" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 	string name = toks[2];
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
 		acns.push_back({name, {}});
 		size_t n = acns.size();
-		cout << "[" << n-1 << "] " << name << " " << endl;
+		cout << "[" << n - 1 << "] " << name << " " << endl;
 	}
 	else if (toks[1] == "ad")
 	{
@@ -938,97 +945,88 @@ void exec_new(vector<string> toks)
 		usage();
 }
 
-void exec_add (vector<string> toks)
+void exec_add(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: add [AC|AD] # <where> [AD|BA] #" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "save: id not found" << endl;
-	};
-	auto direction = []() -> void
-	{
-		cerr << "direction: 0-360" << endl;
-	};
+	auto usage     = []() -> void { cerr << "usage: add [AC|AD] # <where> [AD|BA] #" << endl; };
+	auto count     = []() -> void { cerr << "save: id not found" << endl; };
+	auto direction = []() -> void { cerr << "direction: 0-360" << endl; };
 
-	if (toks.size() != 6) return usage();
+	if (toks.size() != 6)
+		return usage();
 	string name = toks[2];
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
-		auto usage = []() -> void
-		{
-			cerr << "usage: add AC # <anim-name> AD #" << endl;
-		};
-		size_t i = stoi(toks[2]);
-		size_t n = acns.size();
-		if (i>=n) return count();
-		AC& ac = acns[i].ac;
+		auto   usage = []() -> void { cerr << "usage: add AC # <anim-name> AD #" << endl; };
+		size_t i     = stoi(toks[2]);
+		size_t n     = acns.size();
+		if (i >= n)
+			return count();
+		AC&    ac   = acns[i].ac;
 		string name = toks[3];
 		to_lower(toks[4]);
-		if (toks[4] != "ad") return usage();
+		if (toks[4] != "ad")
+			return usage();
 		size_t i2 = stoi(toks[5]);
 		size_t n2 = adns.size();
-		if (i2 >= n2) return count();
+		if (i2 >= n2)
+			return count();
 		AD& ad = adns[i2].ad;
 		ac.AddVariant(name, ad);
 	}
 	else if (toks[1] == "ad")
 	{
-		auto usage = []() -> void
-		{
-			cerr << "usage: add AD # <direction> BA #" << endl;
-		};
-		size_t i = stoi(toks[2]);
-		size_t n = adns.size();
-		if (i >= n) return count();
-		AD& ad = adns[i].ad;
+		auto   usage = []() -> void { cerr << "usage: add AD # <direction> BA #" << endl; };
+		size_t i     = stoi(toks[2]);
+		size_t n     = adns.size();
+		if (i >= n)
+			return count();
+		AD&   ad  = adns[i].ad;
 		short dir = stoi(toks[3]);
-		if (dir<0 || dir>360) return direction();
+		if (dir < 0 || dir > 360)
+			return direction();
 		to_lower(toks[4]);
-		if (toks[4] != "ba") return usage();
+		if (toks[4] != "ba")
+			return usage();
 		size_t i2 = stoi(toks[5]);
 		size_t n2 = bans.size();
-		if (i2 >= n2) return count();
+		if (i2 >= n2)
+			return count();
 		BA& ba = bans[i2].ba;
 		ad.AddDir(dir, ba);
 	}
 	else
 		usage();
-
 }
 
-auto regular_anims = {
-	"BLANK", "DEFAULT", "WALK", "RUN", "DEFEND", "DEATH", "DEAD", "FORTIFY", "FORTIFYHOLD", "FIDGET",
-	"VICTORY", "TURNLEFT", "TURNRIGHT", "BUILD", "ROAD", "MINE", "IRRIGATE", "FORTRESS", "CAPTURE",
-	"JUNGLE", "FOREST", "PLANT"
-};
+auto regular_anims = {"BLANK",       "DEFAULT",  "WALK",    "RUN",      "DEFEND",    "DEATH", "DEAD", "FORTIFY",
+					  "FORTIFYHOLD", "FIDGET",   "VICTORY", "TURNLEFT", "TURNRIGHT", "BUILD", "ROAD", "MINE",
+					  "IRRIGATE",    "FORTRESS", "CAPTURE", "JUNGLE",   "FOREST",    "PLANT"};
 
 extern bool LoadFLC(const char* fn, alib::AD&);
 
 bool flc(AC& ac, fs::path fn)
 {
-
 	Ini ini;
 	{
-		if (!fs::is_directory(fn)) return false;
-		auto inifn = fn / fn.filename().concat(".INI");
+		if (!fs::is_directory(fn))
+			return false;
+		auto          inifn = fn / fn.filename().concat(".INI");
 		std::ifstream fs{inifn};
 		ini.read(fs);
 	}
 
-	auto doit = [&](fs::path fn, string name, string key) -> void
-	{
+	auto doit = [&](fs::path fn, string name, string key) -> void {
 		auto nam = ini.getValue("animations", key);
-		if (nam.empty()) return;
-		if (!fs::exists(fn / nam)) return;
+		if (nam.empty())
+			return;
+		if (!fs::exists(fn / nam))
+			return;
 		std::string nn = name;
 		boost::to_lower(nn);
 		string ss = (fn / nam).generic_string();
-		AD ad;
-		bool ok = LoadFLC(ss.c_str(), ad);
+		AD     ad;
+		bool   ok = LoadFLC(ss.c_str(), ad);
 		if (ok)
 			ac.AddVariant(nn, ad);
 	};
@@ -1045,13 +1043,11 @@ bool flc(AC& ac, fs::path fn)
 
 void exec_ifp(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: ifp <in-path> [ac|pac|fac|fzac] <out-path>" << endl;
-	};
-	if (toks.size() != 4) return usage();
+	auto usage = []() -> void { cerr << "usage: ifp <in-path> [ac|pac|fac|fzac] <out-path>" << endl; };
+	if (toks.size() != 4)
+		return usage();
 
-	fs::path dir = toks[1];
+	fs::path               dir = toks[1];
 	fs::directory_iterator di{dir};
 	for (const auto& itm : di)
 	{
@@ -1060,85 +1056,108 @@ void exec_ifp(vector<string> toks)
 		fs::path out_fn = toks[3];
 		out_fn /= name.filename();
 		string ext;
-		to_upper(toks[2]); int kind;
-		/**/ if (toks[2] == "AC")   { kind=1; ext = ".ac";   }
-		else if (toks[2] == "PAC")  { kind=2; ext = ".pac";  }
-		else if (toks[2] == "FAC")  { kind=3; ext = ".fac";  }
-		else if (toks[2] == "FZAC") { kind=4; ext = ".fzac"; }
+		to_upper(toks[2]);
+		int kind;
+		/**/ if (toks[2] == "AC")
+		{
+			kind = 1;
+			ext  = ".ac";
+		}
+		else if (toks[2] == "PAC")
+		{
+			kind = 2;
+			ext  = ".pac";
+		}
+		else if (toks[2] == "FAC")
+		{
+			kind = 3;
+			ext  = ".fac";
+		}
+		else if (toks[2] == "FZAC")
+		{
+			kind = 4;
+			ext  = ".fzac";
+		}
 		else
 			return usage();
 		out_fn += ext;
 
 		if (fs::is_directory(name) && !fs::exists(out_fn))
 		{
-			AC ac;
+			AC   ac;
 			bool ok = flc(ac, name);
 			if (ok)
 			{
 				ofstream ofs{out_fn, fstream::binary};
 				switch (kind)
 				{
-					case 1: {
-						ofs.write("AC_3", 4);
-						streamtarget st{ofs};
-						ac.SBT(6, st);
-						st.done();
-					} break;
-					case 2: {
-						ofs.write("acp1", 4);
-						streamtarget st{ofs};
-						compress_bypass_target cbt(6, st);
-						ac.SavePacked(6,cbt);
-						cbt.done();
-					} break;
-					case 3: {
-						ac.SaveFast(ofs);
-					} break;
-					case 4: {
-						BVec v1,v2;
-						ac.SaveFast(v1);
-						LZMACompress(v1,v2, 6);
-						ofs.write((char*)v2.data(), v2.size());
-					} break;
+				case 1:
+				{
+					ofs.write("AC_3", 4);
+					streamtarget st{ofs};
+					ac.SBT(6, st);
+					st.done();
+				}
+				break;
+				case 2:
+				{
+					ofs.write("acp1", 4);
+					streamtarget           st{ofs};
+					compress_bypass_target cbt(6, st);
+					ac.SavePacked(6, cbt);
+					cbt.done();
+				}
+				break;
+				case 3:
+				{
+					ac.SaveFast(ofs);
+				}
+				break;
+				case 4:
+				{
+					BVec v1, v2;
+					ac.SaveFast(v1);
+					LZMACompress(v1, v2, 6);
+					ofs.write((char*)v2.data(), v2.size());
+				}
+				break;
 				}
 				std::cout << "wrote " << out_fn << endl;
 			}
-			else {
+			else
+			{
 				cout << name.filename() << "failed.\n";
 			}
 		}
 	}
 }
 
-
 void exec_imp(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: import [FLC|PCX|DAT|SEQ] <path>" << endl;
-	};
-	auto format = []() -> void
-	{
-		cerr << "import: flc parse error" << endl;
-	};
-	if (toks.size() < 2) return usage();
+	auto usage  = []() -> void { cerr << "usage: import [FLC|PCX|DAT|SEQ] <path>" << endl; };
+	auto format = []() -> void { cerr << "import: flc parse error" << endl; };
+	if (toks.size() < 2)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "flc")
 	{
-		if (toks.size() != 3) return usage();
+		if (toks.size() != 3)
+			return usage();
 		auto p = toks[2].find('*');
 		if (p != string::npos)
 		{
 			p = toks[2].find_last_of("/\\");
 			fs::path dir;
-			string pat;
-			if (p==string::npos)
+			string   pat;
+			if (p == string::npos)
 			{
 				dir = ".";
 				pat = toks[2];
-			} else {
+			}
+			else
+			{
 				dir = toks[2].substr(0, p);
-				pat = toks[2].substr(p+1);
+				pat = toks[2].substr(p + 1);
 				cout << " dir : '" << dir << "'\n";
 				cout << " pat : '" << pat << "'\n";
 				fs::directory_iterator di{dir};
@@ -1147,15 +1166,16 @@ void exec_imp(vector<string> toks)
 					auto name = itm.path();
 					if (fs::is_directory(name))
 					{
-						AC ac;
+						AC   ac;
 						bool ok = flc(ac, name);
 						if (ok)
 						{
-							acns.push_back({name.filename().generic_string(),ac});
+							acns.push_back({name.filename().generic_string(), ac});
 							size_t n = acns.size();
 							cout << "[" << n - 1 << "] " << acns.back().name << " " << endl;
 						}
-						else {
+						else
+						{
 							cout << name.filename() << "failed.\n";
 						}
 					}
@@ -1164,15 +1184,17 @@ void exec_imp(vector<string> toks)
 		}
 		else
 		{
-			AC ac;
+			AC       ac;
 			fs::path name = toks[2];
-			bool ok = flc(ac, name);
+			bool     ok   = flc(ac, name);
 			if (ok)
 			{
-				acns.push_back({name.filename().generic_string(),ac});
+				acns.push_back({name.filename().generic_string(), ac});
 				size_t n = acns.size();
 				cout << "[" << n - 1 << "] " << acns.back().name << " " << endl;
-			} else {
+			}
+			else
+			{
 				format();
 			}
 		}
@@ -1183,15 +1205,13 @@ void exec_imp(vector<string> toks)
 	}
 	else if (toks[1] == "seq")
 	{
-		auto usage = []() -> void
-		{
-			cerr << "usage: import SEQ <path-lead> #digits #delay" << endl;
-		};
-		if (toks.size() != 5) return usage();
-		//fs::path name = toks[2];
+		auto usage = []() -> void { cerr << "usage: import SEQ <path-lead> #digits #delay" << endl; };
+		if (toks.size() != 5)
+			return usage();
+		// fs::path name = toks[2];
 		int dig = stoi(toks[3]);
-		BA ba;
-		for (int i=0; ;++i)
+		BA  ba;
+		for (int i = 0;; ++i)
 		{
 			stringstream ss;
 			ss << toks[2] << setw(dig) << setfill('0') << i;
@@ -1202,11 +1222,11 @@ void exec_imp(vector<string> toks)
 			}
 			else if (fs::exists(ss.str() + ".pcx"))
 			{
-				cis.LoadPCX((ss.str()+".pcx").c_str());
+				cis.LoadPCX((ss.str() + ".pcx").c_str());
 			}
 			else if (fs::exists(ss.str() + ".bmp"))
 			{
-				cis.LoadBMP((ss.str() + ".bmp").c_str(), {255,0,255}, 0, 0);
+				cis.LoadBMP((ss.str() + ".bmp").c_str(), {255, 0, 255}, 0, 0);
 			}
 			if (!cis.Loaded())
 				break;
@@ -1217,12 +1237,14 @@ void exec_imp(vector<string> toks)
 			ba.SetJBF(0);
 			ba.SetRep(true);
 			ba.SetDelay(stoi(toks[4]));
-			fs::path p = toks[2];
-			string name = p.filename().generic_string();
+			fs::path p    = toks[2];
+			string   name = p.filename().generic_string();
 			bans.push_back({name, std::move(ba)});
 			size_t n = bans.size();
 			cout << "[" << n - 1 << "] " << name << " " << endl;
-		} else {
+		}
+		else
+		{
 			cerr << "import failed" << endl;
 		}
 	}
@@ -1232,22 +1254,18 @@ void exec_imp(vector<string> toks)
 
 void exec_del(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: del [AC|AD|BA] #" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "del: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: del [AC|AD|BA] #" << endl; };
+	auto count = []() -> void { cerr << "del: id not found" << endl; };
 
-	if (toks.size() != 3) return usage();
+	if (toks.size() != 3)
+		return usage();
 	to_lower(toks[1]);
 	size_t i = stoi(toks[2]);
 	if (toks[1] == "ac")
 	{
 		size_t n = acns.size();
-		if (i>=n) return count();
+		if (i >= n)
+			return count();
 		string name = acns[i].name;
 		acns.erase(acns.begin() + i);
 		cout << "removed " << name << endl;
@@ -1255,7 +1273,8 @@ void exec_del(vector<string> toks)
 	else if (toks[1] == "ad")
 	{
 		size_t n = adns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		string name = adns[i].name;
 		adns.erase(adns.begin() + i);
 		cout << "removed " << name << endl;
@@ -1263,7 +1282,8 @@ void exec_del(vector<string> toks)
 	else if (toks[1] == "ba")
 	{
 		size_t n = bans.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		string name = bans[i].name;
 		bans.erase(bans.begin() + i);
 		cout << "removed " << name << endl;
@@ -1274,35 +1294,33 @@ void exec_del(vector<string> toks)
 
 void exec_ren(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: rename [AC|AD|BA] # <newname>" << endl;
-	};
-	auto count = []() -> void
-	{
-		cerr << "rename: id not found" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: rename [AC|AD|BA] # <newname>" << endl; };
+	auto count = []() -> void { cerr << "rename: id not found" << endl; };
 
-	if (toks.size() != 4) return usage();
+	if (toks.size() != 4)
+		return usage();
 	to_lower(toks[1]);
-	size_t i = stoi(toks[2]);
+	size_t      i       = stoi(toks[2]);
 	std::string newname = toks[3];
 	if (toks[1] == "ac")
 	{
 		size_t n = acns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		acns[i].name = newname;
 	}
 	else if (toks[1] == "ad")
 	{
 		size_t n = adns.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		adns[i].name = newname;
 	}
 	else if (toks[1] == "ba")
 	{
 		size_t n = bans.size();
-		if (i >= n) return count();
+		if (i >= n)
+			return count();
 		bans[i].name = newname;
 	}
 	else
@@ -1311,12 +1329,10 @@ void exec_ren(vector<string> toks)
 
 void exec_delall(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: del* [AC|AD|BA]" << endl;
-	};
+	auto usage = []() -> void { cerr << "usage: del* [AC|AD|BA]" << endl; };
 
-	if (toks.size() != 2) return usage();
+	if (toks.size() != 2)
+		return usage();
 	to_lower(toks[1]);
 	if (toks[1] == "ac")
 	{
@@ -1348,11 +1364,9 @@ void exec_pwd(vector<string>)
 
 void exec_cd(vector<string> toks)
 {
-	auto usage = []() -> void
-	{
-		cerr << "usage: cd <path>" << endl;
-	};
-	if (toks.size()!=2) return usage();
+	auto usage = []() -> void { cerr << "usage: cd <path>" << endl; };
+	if (toks.size() != 2)
+		return usage();
 	fs::path dir = toks[1];
 	fs::current_path(dir);
 	exec_pwd({});
@@ -1397,12 +1411,15 @@ void doit(std::istream* src)
 	{
 		trim(line);
 		escaped_list_separator<char> els("\\", " ", "\"'");
-		tokenizer<decltype(els)> tizer(line, els);
-		vector<string> toks;
+		tokenizer<decltype(els)>     tizer(line, els);
+		vector<string>               toks;
 		copy(tizer.begin(), tizer.end(), back_inserter(toks));
-		if (toks.empty()) continue;
-		if (toks[0].empty()) continue;
-		if (toks[0][0] == '#') continue;
+		if (toks.empty())
+			continue;
+		if (toks[0].empty())
+			continue;
+		if (toks[0][0] == '#')
+			continue;
 		to_lower(toks[0]);
 		auto res = commands.find(toks[0]);
 		if (res.exact_match || res.count == 1)
@@ -1413,13 +1430,13 @@ void doit(std::istream* src)
 			else
 				break;
 		}
-		#ifdef NDEBUG
+#ifdef NDEBUG
 		else if (line == "-")
 		{
 			cout << "now reading from stdin\n";
 			src = &cin;
 		}
-		#endif
+#endif
 		else if (res.count > 1)
 		{
 			auto itr = res.begin;
@@ -1433,14 +1450,14 @@ void doit(std::istream* src)
 		}
 		else
 		{
-			cout << "commands:\n\t"; 
-			size_t i = 8;
-			auto itr = commands.begin();
+			cout << "commands:\n\t";
+			size_t i   = 8;
+			auto   itr = commands.begin();
 			while (itr != commands.end())
 			{
 				auto str = itr.key();
-				auto n = str.size();
-				if ((i+n) > 80)
+				auto n   = str.size();
+				if ((i + n) > 80)
 				{
 					cout << "\n\t";
 					i = 8;
@@ -1450,7 +1467,8 @@ void doit(std::istream* src)
 					cout << ", ";
 					i += 2;
 				}
-				cout << str; i += n;
+				cout << str;
+				i += n;
 				++itr;
 			}
 			cout << endl;
@@ -1460,10 +1478,9 @@ void doit(std::istream* src)
 
 int main(int argc, char** argv)
 {
-
 	BVec in;
-	for (int i=0; i<25; ++i)
-		in.insert(in.end(),{1,2,3,4,5,6,7,8,9});
+	for (int i = 0; i < 25; ++i)
+		in.insert(in.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9});
 	BVec ut;
 
 	bool ok = LZMACompress(in, ut, 5);
@@ -1471,7 +1488,7 @@ int main(int argc, char** argv)
 	if (ok)
 	{
 		ok = LZMADecompress(ut, utut);
-		assert (in == utut);
+		assert(in == utut);
 	}
 
 	init();
@@ -1481,13 +1498,13 @@ int main(int argc, char** argv)
 		s.erase(remove(s.begin(), s.end(), '\"'), s.end());
 		ifstream in = std::ifstream{s};
 		doit(&in);
-		#ifndef NDEBUG
+#ifndef NDEBUG
 		cout << "now reading from stdin\n";
 		doit(&cin);
-		#endif
-	} else {
+#endif
+	}
+	else
+	{
 		doit(&cin);
 	}
 }
-
-
