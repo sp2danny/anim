@@ -16,7 +16,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
-#include <fmt/format.h>
+//#include <fmt/format.h>
+
+#define NO_SFML
 
 #include "alib.hpp"
 #include "bitstream.hpp"
@@ -1363,28 +1365,28 @@ StringMap<exec> commands;
 
 void init()
 {
-	commands["exit"] = nullptr;
-	commands["quit"] = nullptr;
-	commands["list"] = &exec_list;
-	commands["add"] = &exec_add;
-	commands["extract"] = &exec_extr;
-	commands["load"] = &exec_load;
-	commands["save"] = &exec_save;
-	commands["save*"] = &exec_saveall;
-	commands["new"] = &exec_new;
-	commands["import"] = &exec_imp;
-	commands["del"] = &exec_del;
-	commands["del*"] = &exec_delall;
-	commands["cd"] = &exec_cd;
-	commands["pwd"] = &exec_pwd;
-	commands["rename"] = &exec_ren;
-	commands["pack"] = &exec_save_pack;
-	commands["unpack"] = &exec_load_pack;
-	commands["ifp"] = &exec_ifp;
-	commands["savefast"] = &exec_savefast;
-	commands["loadfast"] = &exec_loadfast;
-	commands["makefast"] = &exec_makefast;
-	commands["fastzip"] = &exec_fastzip;
+	commands["exit"]      = nullptr;
+	commands["quit"]      = nullptr;
+	commands["list"]      = &exec_list;
+	commands["add"]       = &exec_add;
+	commands["extract"]   = &exec_extr;
+	commands["load"]      = &exec_load;
+	commands["save"]      = &exec_save;
+	commands["save*"]     = &exec_saveall;
+	commands["new"]       = &exec_new;
+	commands["import"]    = &exec_imp;
+	commands["del"]       = &exec_del;
+	commands["del*"]      = &exec_delall;
+	commands["cd"]        = &exec_cd;
+	commands["pwd"]       = &exec_pwd;
+	commands["rename"]    = &exec_ren;
+	commands["pack"]      = &exec_save_pack;
+	commands["unpack"]    = &exec_load_pack;
+	commands["ifp"]       = &exec_ifp;
+	commands["savefast"]  = &exec_savefast;
+	commands["loadfast"]  = &exec_loadfast;
+	commands["makefast"]  = &exec_makefast;
+	commands["fastzip"]   = &exec_fastzip;
 	commands["fastunzip"] = &exec_fastunzip;
 }
 
@@ -1458,7 +1460,6 @@ void doit(std::istream* src)
 
 int main(int argc, char** argv)
 {
-	extern void foo(); foo();
 
 	BVec in;
 	for (int i=0; i<25; ++i)
@@ -1487,91 +1488,6 @@ int main(int argc, char** argv)
 	} else {
 		doit(&cin);
 	}
-}
-
-
-
-#include <thread>
-#include <mutex>
-#include <optional>
-
-template<typename T>
-class FIFO
-{
-public:
-	FIFO& Put(T t)
-	{
-		std::scoped_lock<decltype(mtx)> lock(mtx);
-		buffer.push_back(std::move(t));
-		cv.notify_one();
-		return *this;
-	}
-
-	FIFO& operator<<(T t) { Put(std::move(t)); return *this; }
-	FIFO& operator>>(T& t) { t = Get(); return *this; }
-
-	template<typename It>
-	void Put(It b, It e)
-	{
-		std::scoped_lock<decltype(mtx)> lock(mtx);
-		while (b!=e)
-		{
-			buffer.push_back(*b);
-			++b;
-		}
-		cv.notify_one();
-	}
-
-	T Get()
-	{
-		std::unique_lock<std::mutex> lock(mtx);
-		while (true)
-		{
-			if (!buffer.empty())
-			{
-				T t = std::move(buffer.front());
-				buffer.pop_front();
-				lock.unlock();
-				return t;
-			}
-			cv.wait(lock);
-		}
-	}
-
-	std::optional<T> Peek()
-	{
-		std::scoped_lock<decltype(mtx)> lock(mtx);
-		if (buffer.empty())
-		{
-			return std::nullopt;
-		}
-		else
-		{
-			T t = std::move(buffer.front());
-			buffer.pop_front();
-			return t;
-		}
-	}
-
-private:
-	std::deque<T> buffer;
-	std::mutex mtx;
-	std::condition_variable cv;
-};
-
-void foo()
-{
-	using namespace std;
-	FIFO<char> char_buffer;
-	string ss = "Hello World"s;
-	char_buffer.Put(ss.begin(), ss.end());
-	while (true)
-	{
-		auto c = char_buffer.Peek();
-		if (!c) break;
-		cout << *c;
-	}
-	cout << endl;
 }
 
 
