@@ -12,3 +12,4 @@ TGUI-0.8.5
 src/lzma
 lib
 .build-*
+*.vcxproj.user
