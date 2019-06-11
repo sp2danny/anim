@@ -32,25 +32,25 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="src\lzma\lib\x64\liblzma.lib">
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-window-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-graphics-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-system-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\lzma\lib\liblzma.lib">
       <Filter>Library Files</Filter>
     </Library>
-    <Library Include="..\..\SFML\lib\sfml-window-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-graphics-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-system-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-window-s-d.lib">
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-system-s-d.lib">
       <Filter>Library Files\Debug</Filter>
     </Library>
-    <Library Include="..\..\SFML\lib\sfml-graphics-s-d.lib">
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-window-s-d.lib">
       <Filter>Library Files\Debug</Filter>
     </Library>
-    <Library Include="..\..\SFML\lib\sfml-system-s-d.lib">
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-graphics-s-d.lib">
       <Filter>Library Files\Debug</Filter>
     </Library>
   </ItemGroup>
