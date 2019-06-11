@@ -9,20 +9,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="Library Files">
-      <UniqueIdentifier>{51d51076-61cb-4ac3-b2e9-d9a332af0b30}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Library Files\Debug">
-      <UniqueIdentifier>{01ff317d-66b2-4ee3-8eb0-3a8f7db6c4ec}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Library Files\Release">
-      <UniqueIdentifier>{d5ba4f7e-b3f7-4dac-ab39-28b1d15f2dc5}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Anim.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -31,41 +19,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="..\..\SFML\lib\sfml-graphics-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-system-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-window-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-window-s-d.lib">
-      <Filter>Library Files\Debug</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-system-s-d.lib">
-      <Filter>Library Files\Debug</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\sfml-graphics-s-d.lib">
-      <Filter>Library Files\Debug</Filter>
-    </Library>
-    <Library Include="TGUI-0.8\lib\tgui-s.lib">
-      <Filter>Library Files\Release</Filter>
-    </Library>
-    <Library Include="TGUI-0.8\lib\tgui-s-d.lib">
-      <Filter>Library Files\Debug</Filter>
-    </Library>
-    <Library Include="..\..\SFML\lib\freetype.lib">
-      <Filter>Library Files</Filter>
-    </Library>
-    <Library Include="src\lzma\lib\x64\liblzma.lib">
-      <Filter>Library Files</Filter>
-    </Library>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\Anim.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\back.h">
       <Filter>Source Files</Filter>
     </ClInclude>

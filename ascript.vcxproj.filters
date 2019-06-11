@@ -13,10 +13,45 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Library Files">
+      <UniqueIdentifier>{71599c82-3cce-40b2-98fa-27e99f94bdb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Library Files\Debug">
+      <UniqueIdentifier>{3c14165d-7ace-4f0e-b389-d4611bdb48da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Library Files\Release">
+      <UniqueIdentifier>{ffb0a7bd-b882-4f8c-af4a-9928be560adf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AnimScript.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\flc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-window-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-graphics-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-system-s.lib">
+      <Filter>Library Files\Release</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\lzma\lib\liblzma.lib">
+      <Filter>Library Files</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-system-s-d.lib">
+      <Filter>Library Files\Debug</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-window-s-d.lib">
+      <Filter>Library Files\Debug</Filter>
+    </Library>
+    <Library Include="..\..\..\..\..\SFML\lib\sfml-graphics-s-d.lib">
+      <Filter>Library Files\Debug</Filter>
+    </Library>
   </ItemGroup>
 </Project>

@@ -200,7 +200,8 @@ bool alib::CIS::Load(const std::string& fn)
 		loaded = true;
 		depth = 8;
 		
-		w = img.w; h = img.h;
+		w = (unsigned short)img.w;
+		h = (unsigned short)img.h;
 		int sz = w*h;
 		pixeltypes.assign(sz, normal);
 		pixels.resize(sz);
