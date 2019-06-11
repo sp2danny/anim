@@ -19,6 +19,7 @@
     <File Name="src/sbct.cpp"/>
     <File Name="src/tokenmap.cpp"/>
     <File Name="src/tokenmap.hpp"/>
+    <File Name="src/flc.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
     <File Name="src/alib.hpp"/>

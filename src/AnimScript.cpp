@@ -1004,7 +1004,7 @@ auto regular_anims = {"BLANK",       "DEFAULT",  "WALK",    "RUN",      "DEFEND"
 
 extern bool LoadFLC(const char* fn, alib::AD&);
 
-bool LoadFLC(const char* fn, alib::AD&) { return false; }
+// bool LoadFLC(const char* fn, alib::AD&) { return false; }
 
 bool flc(AC& ac, fs::path fn)
 {
