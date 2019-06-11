@@ -687,35 +687,4 @@ auto StringMap<T, A>::find_exact(std::string_view key) const -> NodeP
 	return p;
 }
 
-template class StringMap<int>;
-
-void test_string_map()
-{
-	using namespace std;
-
-	StringMap<int> smi;
-
-	smi[ "lala" ] =  7;
-	smi[ "lau"  ] = 11;
-	smi[ "kok"  ] = 33;
-	smi[ "kote" ] = 14;
-
-	auto itr = smi.begin();
-	while (itr != smi.end())
-	{
-		cout << itr.key() << " : " << *itr << endl;
-		//auto tst = itr; ++tst; --tst;
-		//assert (itr == tst);
-		++itr;
-	}
-
-	auto rb = smi.rbegin();
-
-	cout << smi.count("la") << endl;
-	auto res = smi.find("la");
-	cout << res.count << " - " << boolalpha << res.exact_match << endl;
-	for (; res.begin != res.end; ++res.begin)
-		cout << res.begin.key() << " : " << *res.begin << endl;
-
-}
 

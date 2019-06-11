@@ -12,8 +12,6 @@
 
 #include <TGUI/TGUI.hpp>
 
-#include "Anim.h"
-
 #include "alib.hpp"
 
 #include "back.h"
@@ -68,8 +66,6 @@ void Main(const std::vector<std::string>& args)
 	}
 
 	gui.remove(start);
-
-	Anim::Init();
 
 	int c = 35, a = 0;
 

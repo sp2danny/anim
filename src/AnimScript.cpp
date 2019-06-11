@@ -8,10 +8,9 @@
 #include <iomanip>
 #include <string_view>
 #include <utility>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <sstream>
 
-#pragma hdrstop
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
@@ -1007,6 +1006,8 @@ auto regular_anims = {
 };
 
 extern bool LoadFLC(const char* fn, alib::AD&);
+
+bool LoadFLC(const char* fn, alib::AD&) { return false; }
 
 bool flc(AC& ac, fs::path fn)
 {
