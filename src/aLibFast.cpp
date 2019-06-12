@@ -134,7 +134,7 @@ UL alib::CIS::SaveFast(std::ostream& out) const
 
 	bool first = true;
 	PixelType pt;
-	UL cnt, reserve = 0;
+	UL cnt=0, reserve = 0;
 	// part one, the pixtype component
 	for (const auto& itm : pixeltypes)
 	{
