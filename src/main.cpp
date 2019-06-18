@@ -135,6 +135,16 @@ void Main(const std::vector<std::string>& args)
 					item.Instance(c);
 					refl.ContinueWith(item.Refl(names[i], a, c));
 				}
+				else if (event.key.code == sf::Keyboard::Left)
+				{
+					item.Instance(c);
+					refl.ContinueWith(item.Refl(names[i], --a, c));
+				}
+				else if (event.key.code == sf::Keyboard::Right)
+				{
+					item.Instance(c);
+					refl.ContinueWith(item.Refl(names[i], ++a, c));
+				}
 				else if (event.key.code == sf::Keyboard::Numpad6)
 				{
 					refl.ContinueWith(item.Refl(names[i], a = 0, c));
