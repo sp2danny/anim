@@ -189,25 +189,25 @@ bool alib::CIS::Load(const std::string& fn)
 		Load(ifs);
 		return true;
 	}
-	else if(ext=="bmp")
+	else if (ext == "bmp")
 	{
 		RGB_Image     img;
 		std::ifstream ifs{fn, std::fstream::binary | std::fstream::in};
 		alib::LoadBMP(img, ifs);
 
-		hot = {0,0};
+		hot        = {0, 0};
 		has_dither = has_trans = has_colimp = false;
-		loaded = true;
-		depth = 8;
-		
-		w = (unsigned short)img.w;
-		h = (unsigned short)img.h;
-		int sz = w*h;
+		loaded                              = true;
+		depth                               = 8;
+
+		w      = (unsigned short)img.w;
+		h      = (unsigned short)img.h;
+		int sz = w * h;
 		pixeltypes.assign(sz, normal);
 		pixels.resize(sz);
-		for (int i=0; i<sz; ++i)
+		for (int i = 0; i < sz; ++i)
 		{
-			HSV hsv = RGB_2_HSV(img.pix[i]);
+			HSV hsv   = RGB_2_HSV(img.pix[i]);
 			pixels[i] = {hsv.h, hsv.s, hsv.v, 255};
 		}
 		return true;
@@ -1629,14 +1629,46 @@ sf::Texture& alib::BasicAnim::Get(int frame, UC hue)
 // *** AnimDir ***
 // ***************
 
+bool alib::AnimDir::BadCmp::operator()(const BAD& bad, short dir)
+{
+	return bad.dir < dir;
+}
+
+bool alib::AnimDir::BadCmp::operator()(short dir, const BAD& bad)
+{
+	return dir < bad.dir;
+}
+
+bool alib::AnimDir::BadCmp::operator()(const BAD& lhs, const BAD& rhs)
+{
+	return lhs.dir < rhs.dir;
+}
+
+auto alib::AnimDir::Have(short dir) -> std::pair<bool, BasicAnim*>
+{
+	auto res = std::equal_range(bad.begin(), bad.end(), dir, BadCmp{});
+	if (res.first == res.second)
+		return {false, nullptr};
+	assert(res.first != bad.end());
+	BAD& bad = *res.first;
+	assert(bad.dir == dir);
+	return {true, &bad};
+}
+
+void alib::AnimDir::Sort()
+{
+	std::sort(bad.begin(), bad.end(), BadCmp{});
+}
+
 bool alib::AnimDir::Load(const std::string& fn)
 {
+	bool        ok  = false;
 	std::string ext = ExtractFileExt(fn);
 	if (ext == "ad")
 	{
 		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
 		Load(ifs);
-		return true;
+		ok = true;
 	}
 	else
 	{
@@ -1647,10 +1679,11 @@ bool alib::AnimDir::Load(const std::string& fn)
 			bd.dir    = 0;
 			bd.mirror = false;
 			bad.push_back(bd);
-			return true;
+			ok = true;
 		}
 	}
-	return false;
+
+	return ok;
 }
 
 #ifndef NO_SFML
@@ -1886,9 +1919,11 @@ void alib::AnimDir::CreateDir(short dir, bool repeating, short delay, short jbf)
 	d.dir       = dir;
 	d.mirrorof  = dir;
 	d.repeating = repeating;
+
 	d.mirror = d.flipx = d.flipy = d.rot90 = false;
-	d.delay                                = delay;
-	d.jbf                                  = jbf;
+
+	d.delay = delay;
+	d.jbf   = jbf;
 }
 
 void alib::AnimDir::AddFrameTo(short dir, CIS&& cis)
@@ -1896,6 +1931,7 @@ void alib::AnimDir::AddFrameTo(short dir, CIS&& cis)
 	BAD* d = findexact(dir);
 	assert(d);
 	d->anim.push_back(std::move(cis));
+	Sort();
 }
 
 void alib::AnimDir::Clear()
@@ -1905,12 +1941,20 @@ void alib::AnimDir::Clear()
 
 auto alib::AnimDir::findexact(short d) -> AnimDir::BAD*
 {
-	for (BAD& bd : bad)
-	{
-		if (bd.dir == d)
-			return &bd;
-	}
-	return 0;
+	// for (BAD& bd : bad)
+	//{
+	//	if (bd.dir == d)
+	//		return &bd;
+	//}
+	// return 0;
+
+	auto res = std::equal_range(bad.begin(), bad.end(), d, BadCmp{});
+	if (res.first == res.second)
+		return nullptr;
+	assert(res.first != bad.end());
+	BAD& bad = *res.first;
+	assert(bad.dir == d);
+	return &bad;
 }
 
 #ifndef NO_SFML
@@ -1958,6 +2002,7 @@ void alib::AnimDir::Mirror()
 	for (BAD& a : bad)
 		if (a.mirror)
 			a.MakeMirror(Closest(a.mirrorof), a.flipx, a.flipy, a.rot90);
+	Sort();
 }
 
 // ----------------------------------------------------------------------------
@@ -1974,7 +2019,8 @@ static std::string ExtractFileNameOnly(std::string fn)
 	else
 		++p1;
 	auto p2 = fn.find_last_of(".");
-	if (p2 < p1) p2 = std::string::npos;
+	if (p2 < p1)
+		p2 = std::string::npos;
 	if (p2 == std::string::npos)
 		return fn.substr(p1);
 	else
@@ -2232,7 +2278,6 @@ extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
 
 bool alib::AnimCollection::Load(const std::string& fn)
 {
-
 	std::string ext = boost::to_lower_copy(ExtractFileExt(fn));
 
 	/**/ if (ext == "fzac")
@@ -2573,9 +2618,9 @@ void alib::AnimReflection::Set(CIS* c, UC h)
 void alib::AnimReflection::Set(AnimReflection& ar)
 {
 	clr();
-	cis = ar.cis;
-	ba  = ar.ba;
-	hue = ar.hue;
+	cis     = ar.cis;
+	ba      = ar.ba;
+	hue     = ar.hue;
 	current = 0;
 }
 
