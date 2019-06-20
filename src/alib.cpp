@@ -1086,11 +1086,13 @@ auto alib::CIS::Refl(UC hue) -> AnimReflection
 
 auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 {
-	assert(loaded);
 
 	auto itr = images.find(hue);
 	if (itr != images.end())
 		return itr;
+
+	assert(loaded);
+
 	auto res = images.try_emplace(hue);
 	assert(res.second);
 
