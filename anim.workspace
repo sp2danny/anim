@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="anim" Database="/home/sp2danny/extra/.codelite/anim.tags" Version="10.0.0">
   <Project Name="aview" Path="aview.project" Active="No"/>
-  <Project Name="alib" Path="alib.project" Active="No"/>
-  <Project Name="ascript" Path="ascript.project" Active="Yes"/>
+  <Project Name="alib" Path="alib.project" Active="Yes"/>
+  <Project Name="ascript" Path="ascript.project" Active="No"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="no">
       <Environment/>

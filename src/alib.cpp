@@ -2304,7 +2304,6 @@ bool alib::AnimCollection::Load(const std::string& fn)
 	}
 	else if (ext == "ac")
 	{
-		// std::cout << "loading file " << fn << " ext " << ext << std::endl;
 		std::ifstream ifs(fn, std::ios::in | std::ios::binary);
 		Load(ifs);
 		return true;
