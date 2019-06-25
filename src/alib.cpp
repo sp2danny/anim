@@ -2594,10 +2594,18 @@ bool alib::AnimReflection::Update(int ms)
 	}
 	if (current >= ba->Size())
 	{
-		loopcnt += (current / ba->Size());
-		current %= ba->Size();
-		if (!ba->repeating)
+		if (ba->repeating)
+		{
+			while(current >= ba->Size())
+			{
+				loopcnt += 1;
+				current -= ba->Size()+ba->jbf;
+			}
+			return true;
+		} else {
+			current = ba->Size()-1;
 			return false;
+		}
 	}
 	return true;
 }
