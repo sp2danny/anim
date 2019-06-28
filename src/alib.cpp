@@ -2542,9 +2542,39 @@ void alib::AnimReflection::draw(sf::RenderTarget& rt, sf::RenderStates st) const
 		hot       = cis->Hot();
 		spr.setTexture(tex);
 	}
+	else
+	{
+		return;
+	}
 	spr.setOrigin(hot.x, hot.y);
 	st.transform *= tr;
 	rt.draw(spr, st);
+}
+
+alib::Rect alib::AnimReflection::Extent() const
+{
+	Rect r;
+	auto p = getPosition();
+	if (ba)
+	{
+		auto& cis = ba->anim[current];
+		r.width = cis.Width();
+		r.height = cis.Height();
+		r.left = (short)p.x - cis.Hot().x;
+		r.top = (short)p.y - cis.Hot().y;
+	}
+	else if (cis)
+	{
+		r.width = cis->Width();
+		r.height = cis->Height();
+		r.left = (short)p.x - cis->Hot().x;
+		r.top = (short)p.y - cis->Hot().y;
+	}
+	else
+	{
+		r.width = r.height = r.left = r.top = 0;
+	}
+	return r;
 }
 
 bool alib::AnimReflection::Next()

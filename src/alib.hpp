@@ -63,6 +63,7 @@ struct Pos
 {
 	short x, y;
 };
+struct Rect { short left, top, width, height; };
 
 struct BasicAnim;
 struct CIS;
@@ -355,6 +356,8 @@ struct AnimReflection : sf::Drawable, sf::Transformable
 	void Set(AnimReflection& ar);
 	void Set(AnimReflection&& ar) { Set(ar); }
 	void ContinueWith(const AnimReflection& ar);
+
+	Rect Extent() const;
 
 	AnimReflection();
 	AnimReflection(BasicAnim*, UC);
