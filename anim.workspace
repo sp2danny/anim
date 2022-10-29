@@ -4,13 +4,13 @@
   <Project Name="alib" Path="alib.project" Active="Yes"/>
   <Project Name="ascript" Path="ascript.project" Active="No"/>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="Debug" Selected="no">
+    <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Environment/>
       <Project Name="aview" ConfigName="Debug"/>
       <Project Name="alib" ConfigName="Debug"/>
       <Project Name="ascript" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="yes">
+    <WorkspaceConfiguration Name="Release" Selected="no">
       <Environment/>
       <Project Name="aview" ConfigName="Release"/>
       <Project Name="alib" ConfigName="Release"/>

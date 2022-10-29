@@ -212,6 +212,33 @@ bool alib::CIS::Load(const std::string& fn)
 		}
 		return true;
 	}
+	#ifndef NO_SFML
+	else if (ext == "png")
+	{
+		sf::Image img;
+		
+		bool ok = img.loadFromFile(fn);
+		if (!ok) return false;
+		hot = {0, 0};
+		w = img.getSize().x;
+		h = img.getSize().y;
+		has_dither = false;
+		has_trans = true;
+		has_colimp = false;
+		loaded = false;
+		depth = 8;
+		instanciated = true;
+		
+		auto res = images.try_emplace(0);
+		assert(res.second);
+
+		ok = res.first->second.loadFromImage(img);
+		assert(ok);
+		
+		return ok;
+	}
+	#endif
+
 	return false;
 }
 
