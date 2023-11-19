@@ -530,7 +530,7 @@ void alib::CIS::SBT(UC dep, bittarget& trg) const
 
 	int i, sz = w * h;
 
-	assert(ssize(pixeltypes) == sz);
+	assert(std::ssize(pixeltypes) == sz);
 
 	for (i = 0; i < sz; ++i)
 	{

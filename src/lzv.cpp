@@ -33,10 +33,10 @@ void lzv_encoder::encode(token_channel& src, bittarget& dst)
 	auto& nbl = src.tokens;
 
 	#ifndef NDEBUG
-	UL stats_pre_n = 0;
-	UL stats_cod_n = 0;
-	UL stats_pre_l = 0;
-	UL stats_cod_l = 0;
+	[[maybe_unused]] UL stats_pre_n = 0;
+	[[maybe_unused]] UL stats_cod_n = 0;
+	[[maybe_unused]] UL stats_pre_l = 0;
+	[[maybe_unused]] UL stats_cod_l = 0;
 	#endif
 
 	auto max_rle = [&]() -> UL
@@ -330,7 +330,7 @@ void compress_bypass_target::push_tokens()
 	UL curr = 0, nn = (UL)tvec.size();
 
 	//std::cerr << "pushing " << nn << " tokens\n";
-	UL dbg = 0;
+	[[maybe_unused]] UL dbg = 0;
 
 	while (true)
 	{
@@ -385,7 +385,7 @@ void compress_bypass_target::push_tokens()
 void compress_bypass_target::push_bits()
 {
 	//std::cerr << "pushing " << bvec.bitcount() << " bits";
-	UL dbg = 0;
+	[[maybe_unused]] UL dbg = 0;
 
 	UL maxcode = (1ul << current_bd)-1;
 	UL max = 1 + maxcode - next_token;

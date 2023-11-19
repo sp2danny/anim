@@ -203,6 +203,8 @@ UL alib::CIS::SaveFast(std::ostream& out) const
 			assert(false && "pixeltype error");
 		}
 	}
+	
+	(void)reserve;
 
 	return pos;
 }

@@ -313,7 +313,7 @@ void alib::BasicAnim::LoadSequence( const char* fn )
 		CIS cis;
 		cis.LoadPCX(buff);
 		if(!cis.Width()) break;
-		ba.anim.push_back(move(cis));
+		ba.anim.push_back(std::move(cis));
 	}
 	(*this) = std::move(ba);
 
