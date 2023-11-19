@@ -20,7 +20,7 @@ static bool init_encoder(lzma_stream *strm, uint32_t preset)
 static bool compress(lzma_stream *strm, const BVec& inBuf, BVec& outBuf)
 {
 	UL inSz = (UL)inBuf.size();
-	outBuf.resize(inSz+128);
+	outBuf.resize(inSz+128ll);
 
 	lzma_action action = LZMA_FINISH;
 

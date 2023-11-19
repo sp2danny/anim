@@ -6,16 +6,16 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
-#include <experimental/filesystem>
 #include <sstream>
 #include <map>
 #include <cstring>
+#include <filesystem>
 
 // #pragma hdrstop
 
 #include "alib.hpp"
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 template<typename T>
 bool read(UC*& data, UC* end, T& val)

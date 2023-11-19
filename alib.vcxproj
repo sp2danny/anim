@@ -14,20 +14,20 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{50006941-20BF-47A7-AC81-7A935D06F34A}</ProjectGuid>
     <RootNamespace>alib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>
     </CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>
     </CharacterSet>
@@ -62,7 +62,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST;src/lzma/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST;src/lzma/include;D:\Lib\SFML-2.5.1\include;D:\Lib\boost_1_71_0;D:\GitHub\liblzma\src\liblzma\api</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>SFML_STATIC;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
@@ -84,7 +84,7 @@
       <SDLCheck>
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST;src/lzma/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>/SFML/include;./TGUI-0.8/include;/BOOST;src/lzma/include;D:\Lib\SFML-2.5.1\include;D:\Lib\boost_1_71_0;D:\GitHub\liblzma\src\liblzma\api</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>SFML_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>

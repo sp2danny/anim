@@ -6,12 +6,9 @@
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <filesystem>
 
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-
-// #include <filesystem>
-// namespace fs = std::filesystem;
+namespace fs = std::filesystem;
 
 #ifndef NO_SFML
 #include <SFML/Graphics.hpp>
@@ -23,12 +20,6 @@ namespace fs = std::experimental::filesystem;
 #include "bitmap.hpp"
 #include "alib.hpp"
 #include "bitstream.hpp"
-
-template<typename Cont>
-int ssize(const Cont& cont)
-{
-	return (int)cont.size();
-}
 
 alib::RGBA alib::HSVA_2_RGBA(const HSVA& hsv)
 {
@@ -197,11 +188,11 @@ bool alib::CIS::Load(const std::string& fn)
 
 		hot        = {0, 0};
 		has_dither = has_trans = has_colimp = false;
-		loaded                              = true;
-		depth                               = 8;
+		loaded     = true;
+		depth      = 8;
 
-		w      = (unsigned short)img.w;
-		h      = (unsigned short)img.h;
+		w = (unsigned short)img.w;
+		h = (unsigned short)img.h;
 		int sz = w * h;
 		pixeltypes.assign(sz, normal);
 		pixels.resize(sz);
@@ -1123,10 +1114,8 @@ auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 	auto res = images.try_emplace(hue);
 	assert(res.second);
 
-	sf::Image img;
-
 	std::vector<RGBA> pix;
-	UL                i, n = w * h;
+	UL i, n = w * h;
 	pix.resize(n);
 
 	for (i = 0; i < n; ++i)
@@ -1150,6 +1139,7 @@ auto alib::CIS::make(UC hue) const -> ImgMap::iterator
 		}
 	}
 
+	sf::Image img;
 	img.create(w, h, (UC*)pix.data());
 	[[maybe_unused]] bool ok = res.first->second.loadFromImage(img);
 	assert(ok);

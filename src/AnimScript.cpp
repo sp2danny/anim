@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <string_view>
 #include <utility>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <sstream>
 
 
@@ -26,7 +26,7 @@ using namespace std;
 using namespace alib;
 using namespace boost;
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 extern bool LZMACompress(const BVec& inBuf, BVec& outBuf, UL preset);
 extern bool LZMADecompress(const BVec& inBuf, BVec& outBuf);
